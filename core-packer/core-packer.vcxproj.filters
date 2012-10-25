@@ -1,0 +1,170 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\tclap">
+      <UniqueIdentifier>{90a8df99-4dfd-480b-a399-ad83e4da3c76}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="asm">
+      <UniqueIdentifier>{176c3d2e-2681-4b78-88a8-0b67aa6df10c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="tclap\Arg.h">
+      <Filter>Header Files\tclap</Filter>
+    </ClInclude>
+    <ClInclude Include="tclap\ArgException.h">
+      <Filter>Header Files\tclap</Filter>
+    </ClInclude>
+    <ClInclude Include="tclap\ArgTraits.h">
+      <Filter>Header Files\tclap</Filter>
+    </ClInclude>
+    <ClInclude Include="tclap\CmdLine.h">
+      <Filter>Header Files\tclap</Filter>
+    </ClInclude>
+    <ClInclude Include="tclap\CmdLineInterface.h">
+      <Filter>Header Files\tclap</Filter>
+    </ClInclude>
+    <ClInclude Include="tclap\CmdLineOutput.h">
+      <Filter>Header Files\tclap</Filter>
+    </ClInclude>
+    <ClInclude Include="tclap\Constraint.h">
+      <Filter>Header Files\tclap</Filter>
+    </ClInclude>
+    <ClInclude Include="tclap\DocBookOutput.h">
+      <Filter>Header Files\tclap</Filter>
+    </ClInclude>
+    <ClInclude Include="tclap\HelpVisitor.h">
+      <Filter>Header Files\tclap</Filter>
+    </ClInclude>
+    <ClInclude Include="tclap\IgnoreRestVisitor.h">
+      <Filter>Header Files\tclap</Filter>
+    </ClInclude>
+    <ClInclude Include="tclap\MultiArg.h">
+      <Filter>Header Files\tclap</Filter>
+    </ClInclude>
+    <ClInclude Include="tclap\MultiSwitchArg.h">
+      <Filter>Header Files\tclap</Filter>
+    </ClInclude>
+    <ClInclude Include="tclap\OptionalUnlabeledTracker.h">
+      <Filter>Header Files\tclap</Filter>
+    </ClInclude>
+    <ClInclude Include="tclap\StandardTraits.h">
+      <Filter>Header Files\tclap</Filter>
+    </ClInclude>
+    <ClInclude Include="tclap\StdOutput.h">
+      <Filter>Header Files\tclap</Filter>
+    </ClInclude>
+    <ClInclude Include="tclap\SwitchArg.h">
+      <Filter>Header Files\tclap</Filter>
+    </ClInclude>
+    <ClInclude Include="tclap\UnlabeledMultiArg.h">
+      <Filter>Header Files\tclap</Filter>
+    </ClInclude>
+    <ClInclude Include="tclap\UnlabeledValueArg.h">
+      <Filter>Header Files\tclap</Filter>
+    </ClInclude>
+    <ClInclude Include="tclap\ValueArg.h">
+      <Filter>Header Files\tclap</Filter>
+    </ClInclude>
+    <ClInclude Include="tclap\ValuesConstraint.h">
+      <Filter>Header Files\tclap</Filter>
+    </ClInclude>
+    <ClInclude Include="tclap\VersionVisitor.h">
+      <Filter>Header Files\tclap</Filter>
+    </ClInclude>
+    <ClInclude Include="tclap\Visitor.h">
+      <Filter>Header Files\tclap</Filter>
+    </ClInclude>
+    <ClInclude Include="tclap\XorHandler.h">
+      <Filter>Header Files\tclap</Filter>
+    </ClInclude>
+    <ClInclude Include="tclap\ZshCompletionOutput.h">
+      <Filter>Header Files\tclap</Filter>
+    </ClInclude>
+    <ClInclude Include="decrypt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="library.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LoadLibrary.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="macro.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc4.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="reloc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rva.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="symbols.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="decrypt.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DllEntryPoint.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DllEntryPoint32.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DllEntryPoint64.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="library.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LoadLibrary.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="main32.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="main64.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc4.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="reloc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rva.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="symbols.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="fix32.asm">
+      <Filter>asm</Filter>
+    </None>
+    <None Include="fix64.asm">
+      <Filter>asm</Filter>
+    </None>
+  </ItemGroup>
+</Project>
