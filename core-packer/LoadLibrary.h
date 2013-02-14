@@ -3,7 +3,6 @@
 
 #pragma once
 
-
 class CLoadLibrary
 {
 	private:
@@ -18,7 +17,6 @@ class CLoadLibrary
 		PIMAGE_SECTION_HEADER	AddSectionHeader();
 		
 		LPVOID ExpandOptionalHeader(WORD requiredBytes);
-
 		
 		BOOL SaveLibraryToFile(TCHAR* lpOutFileName);
 		BOOL SaveLibrary64ToFile(TCHAR* lpOutFileName);

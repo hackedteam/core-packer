@@ -117,11 +117,20 @@
     <ClInclude Include="symbols.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="tea.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dll32.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="patchutils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dll64.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="decrypt.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="DllEntryPoint.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -158,13 +167,25 @@
     <ClCompile Include="symbols.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="tea.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ExeEntryPoint32.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="patchutils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="fix32.asm">
+    <MASM Include="dll_fix32.asm">
       <Filter>asm</Filter>
-    </None>
-    <None Include="fix64.asm">
+    </MASM>
+    <MASM Include="dll_fix64.asm">
       <Filter>asm</Filter>
-    </None>
+    </MASM>
+    <MASM Include="pe_fix32.asm">
+      <Filter>asm</Filter>
+    </MASM>
   </ItemGroup>
 </Project>

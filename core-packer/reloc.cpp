@@ -2,6 +2,12 @@
 #include "reloc.h"
 #include "rva.h"
 #include "macro.h"
+#include "symbols.h"
+
+
+#ifdef _BUILD32
+	#include "dll32.h"
+#endif
 
 #pragma section(".hermit", read, execute)
 
@@ -70,10 +76,12 @@ void Reloc_Process(LPVOID pModule, PIMAGE_NT_HEADERS64 pImageNtHeader, PIMAGE_SE
 #pragma code_seg(".hermit")
 BOOL reloc_is_text(PIMAGE_NT_HEADERS32 pImageNtHeader, PIMAGE_SECTION_HEADER pSectionText, DWORD offset)
 {
+	DWORD ImageBase = (DWORD) _baseAddress;
+
 	DWORD minVirtualAddress = pSectionText->VirtualAddress;
 	DWORD maxVirtualAddress = pSectionText->VirtualAddress + pSectionText->Misc.VirtualSize;
 
-	offset -= pImageNtHeader->OptionalHeader.ImageBase;
+	offset -= ImageBase;
 	
 	if (minVirtualAddress <= offset && offset < maxVirtualAddress)
 		return TRUE;
@@ -84,13 +92,12 @@ BOOL reloc_is_text(PIMAGE_NT_HEADERS32 pImageNtHeader, PIMAGE_SECTION_HEADER pSe
 #pragma code_seg(".hermit")
 void reloctext(LPVOID pModule, PIMAGE_NT_HEADERS32 pImageNtHeader, PIMAGE_SECTION_HEADER pSectionPointer, LPVOID lpRelocAddress, DWORD dwRelocSize, LPVOID lpTextAddr)
 {
-	if (dwRelocSize == 0 || lpRelocAddress == NULL)
-		return;	// no reloc table here!
+	DWORD ImageBase = (DWORD) _baseAddress;
 
 	base_relocation_block_t *relocation_page = (base_relocation_block_t *) lpRelocAddress;
 
-	if (relocation_page == NULL)
-		return;	// no relocation page available!
+	if (dwRelocSize == 0 || relocation_page == NULL)
+		return;	// no reloc table here!
 
 	// for each page!
 	while(relocation_page->BlockSize > 0)
@@ -121,12 +128,12 @@ void reloctext(LPVOID pModule, PIMAGE_NT_HEADERS32 pImageNtHeader, PIMAGE_SECTIO
 					switch(type)
 					{
 						case IMAGE_REL_BASED_HIGHLOW:
-							value = value - pImageNtHeader->OptionalHeader.ImageBase;
+							value = value - ImageBase;
 							value = value + (DWORD) pModule;
 							*ptr = value;
 							break;
 						case IMAGE_REL_BASED_DIR64:
-							dwNewValue = value - pImageNtHeader->OptionalHeader.ImageBase + (ULONG) pModule;
+							dwNewValue = value - ImageBase + (ULONG) pModule;
 							*ptr = dwNewValue;
 							break;
 						default:
@@ -137,7 +144,7 @@ void reloctext(LPVOID pModule, PIMAGE_NT_HEADERS32 pImageNtHeader, PIMAGE_SECTIO
 				{	// applying different patch!
 					if (type == IMAGE_REL_BASED_HIGHLOW) 
 					{
-							value = value - pImageNtHeader->OptionalHeader.ImageBase - 0x1000;
+							value = value - ImageBase - 0x1000;
 							value = value + (DWORD) lpTextAddr;
 							*ptr = value;
 					}
@@ -157,6 +164,8 @@ void reloctext(LPVOID pModule, PIMAGE_NT_HEADERS32 pImageNtHeader, PIMAGE_SECTIO
 #pragma code_seg(".hermit")
 void Reloc_Process(LPVOID pModule, PIMAGE_NT_HEADERS32 pImageNtHeader, PIMAGE_SECTION_HEADER pSectionPointer, LPVOID lpRelocAddress, DWORD dwRelocSize, PIMAGE_SECTION_HEADER pTextPointer, LPVOID lpTextAddr)
 {
+	DWORD ImageBase = (DWORD) _baseAddress;
+
 	if (dwRelocSize == 0 || lpRelocAddress == NULL)
 		return;	// no reloc table here!
 
@@ -193,12 +202,12 @@ void Reloc_Process(LPVOID pModule, PIMAGE_NT_HEADERS32 pImageNtHeader, PIMAGE_SE
 					switch(type)
 					{
 						case IMAGE_REL_BASED_HIGHLOW:
-							value = value - pImageNtHeader->OptionalHeader.ImageBase;
+							value = value - ImageBase;
 							value = value + (DWORD) pModule;
 							*ptr = value;
 							break;
 						case IMAGE_REL_BASED_DIR64:
-							dwNewValue = value - pImageNtHeader->OptionalHeader.ImageBase + (ULONG) pModule;
+							dwNewValue = value - ImageBase + (ULONG) pModule;
 							*ptr = dwNewValue;
 							break;
 						default:
@@ -209,7 +218,7 @@ void Reloc_Process(LPVOID pModule, PIMAGE_NT_HEADERS32 pImageNtHeader, PIMAGE_SE
 				{	// applying different patch!
 					if (type == IMAGE_REL_BASED_HIGHLOW) 
 					{
-							value = value - pImageNtHeader->OptionalHeader.ImageBase - 0x1000;
+							value = value - ImageBase - 0x1000;
 							value = value + (DWORD) lpTextAddr;
 							*ptr = value;
 					}

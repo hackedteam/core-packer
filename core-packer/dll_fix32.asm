@@ -2,7 +2,8 @@
 
 option casemap :none
 
-.code hermit
+hermit SEGMENT PUBLIC READ EXECUTE ALIAS('.hermit')
+
 ;public _VirtualProtect
 ;public _VirtualAlloc
 public g_hKernel32
@@ -45,6 +46,11 @@ _LoadLibraryA PROC param1: DWORD
 	mov eax, dword ptr [g_hKernel32]
 	add eax, 11223340h
 	jmp dword ptr ds:[eax]
+	nop
+	nop
+	nop
+	nop
+	nop
 _LoadLibraryA ENDP
 
 _GetProcAddress PROC param1: DWORD, param2: DWORD
@@ -53,6 +59,11 @@ _GetProcAddress PROC param1: DWORD, param2: DWORD
 	mov eax, dword ptr [g_hKernel32]
 	add eax, 11223341h
 	jmp dword ptr [eax]
+	nop
+	nop
+	nop
+	nop
+	nop
 _GetProcAddress ENDP
 
 
@@ -62,6 +73,11 @@ _SetFilePointer PROC param1: DWORD, param2: DWORD, param3: DWORD, p4: DWORD
 	mov eax, dword ptr [g_hKernel32]
 	add eax, 11223342h
 	jmp dword ptr [eax]
+	nop
+	nop
+	nop
+	nop
+	nop
 _SetFilePointer ENDP
 
 _CloseHandle PROC param1: DWORD
@@ -70,6 +86,11 @@ _CloseHandle PROC param1: DWORD
 	mov eax, dword ptr [g_hKernel32]
 	add eax, 11223343h
 	jmp dword ptr [eax]
+	nop
+	nop
+	nop
+	nop
+	nop
 _CloseHandle ENDP
 
 _ReadFile PROC param1: DWORD, param2: DWORD, param3: DWORD, p4: DWORD, p5: DWORD
@@ -78,6 +99,11 @@ _ReadFile PROC param1: DWORD, param2: DWORD, param3: DWORD, p4: DWORD, p5: DWORD
 	mov eax, dword ptr [g_hKernel32]
 	add eax, 11223344h
 	jmp dword ptr [eax]
+	nop
+	nop
+	nop
+	nop
+	nop
 _ReadFile ENDP
 
 _GetModuleFileNameA PROC param1: DWORD, param2: DWORD, param3: DWORD
@@ -86,6 +112,11 @@ _GetModuleFileNameA PROC param1: DWORD, param2: DWORD, param3: DWORD
 	mov eax, dword ptr [g_hKernel32]
 	add eax, 11223345h
 	jmp dword ptr [eax]
+	nop
+	nop
+	nop
+	nop
+	nop
 _GetModuleFileNameA ENDP
 
 _CreateFileA PROC lpFileName: DWORD, dwDesiredAccess: DWORD, dwShareMode: DWORD, lpSecurityAttribytes: DWORD, dwCreationDisposition: DWORD, dwFlagsAndAttributes: DWORD, hTemplateFile: DWORD
@@ -94,6 +125,11 @@ _CreateFileA PROC lpFileName: DWORD, dwDesiredAccess: DWORD, dwShareMode: DWORD,
 	mov eax, dword ptr [g_hKernel32]
 	add eax, 11223346h
 	jmp dword ptr [eax]
+	nop
+	nop
+	nop
+	nop
+	nop
 _CreateFileA ENDP
 
 _EntryPoint PROC param1: DWORD, param2: DWORD, param3: DWORD, param4: DWORD

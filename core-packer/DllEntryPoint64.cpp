@@ -1,6 +1,6 @@
 #include <Windows.h>
 #include "symbols.h"
-
+#include "dll64.h"
 #include "rva.h"
 #include "reloc.h"
 #include "rc4.h"

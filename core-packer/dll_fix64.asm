@@ -1,6 +1,7 @@
 option casemap :none
 
-.code hermit
+hermit64 SEGMENT READ EXECUTE ALIAS('.hermit')
+
 ;public _VirtualProtect
 ;public _VirtualAlloc
 public g_hKernel32
@@ -15,7 +16,7 @@ public _FakeEntryPoint6
 public _FakeEntryPoint7
 public _FakeEntryPoint8
 public _FakeEntryPoint9
-
+public _EntryPoint
 
 extern DELAYDECRYPT : PROC
 

@@ -15,34 +15,34 @@ typedef BOOL (WINAPI *VirtualProtect_ptr)(LPVOID lpAddress, SIZE_T dwSize, DWORD
 typedef BOOL (WINAPI *DllMain_ptr)(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
 
 
-__declspec(allocate(".hermit"))
-ULONG64				dwRelocSize			= 0xBABECAFEBAD00021;
-
-__declspec(allocate(".hermit"))
-LPVOID				lpRelocAddress		= (LPVOID) 0xBABECAFEBAD00020;
-
-__declspec(allocate(".hermit"))
-ULONG64				_rc4key0			= 0xBABECAFEBAD00010;
-
-__declspec(allocate(".hermit"))
-ULONG64				_rc4key1			= 0xBABECAFEBAD00011;
-
-// Fixed symbols from loader
-__declspec(allocate(".hermit"))
-LoadLibraryA_ptr	_LoadLibraryA		= (LoadLibraryA_ptr) 0xBABECAFEBAD00004;
-
-__declspec(allocate(".hermit"))
-GetProcAddress_ptr	_GetProcAddress		= (GetProcAddress_ptr) 0xBABECAFEBAD00003;
-
-__declspec(allocate(".hermit"))
-VirtualAlloc_ptr	_VirtualAlloc		= (VirtualAlloc_ptr) 0xBABECAFEBAD00002;
-
-__declspec(allocate(".hermit"))
-DllMain_ptr			_EntryPoint			= (DllMain_ptr) 0xBABECAFEBAD00000;
-
-
-__declspec(allocate(".hermit"))
-HMODULE g_hKernel32 = NULL;
+//__declspec(allocate(".hermit"))
+//ULONG64				dwRelocSize			= 0xBABECAFEBAD00021;
+//
+//__declspec(allocate(".hermit"))
+//LPVOID				lpRelocAddress		= (LPVOID) 0xBABECAFEBAD00020;
+//
+//__declspec(allocate(".hermit"))
+//ULONG64				_rc4key0			= 0xBABECAFEBAD00010;
+//
+//__declspec(allocate(".hermit"))
+//ULONG64				_rc4key1			= 0xBABECAFEBAD00011;
+//
+//// Fixed symbols from loader
+//__declspec(allocate(".hermit"))
+//LoadLibraryA_ptr	_LoadLibraryA		= (LoadLibraryA_ptr) 0xBABECAFEBAD00004;
+//
+//__declspec(allocate(".hermit"))
+//GetProcAddress_ptr	_GetProcAddress		= (GetProcAddress_ptr) 0xBABECAFEBAD00003;
+//
+//__declspec(allocate(".hermit"))
+//VirtualAlloc_ptr	_VirtualAlloc		= (VirtualAlloc_ptr) 0xBABECAFEBAD00002;
+//
+//__declspec(allocate(".hermit"))
+//DllMain_ptr			_EntryPoint			= (DllMain_ptr) 0xBABECAFEBAD00000;
+//
+//
+//__declspec(allocate(".hermit"))
+//HMODULE g_hKernel32 = NULL;
 
 #pragma code_seg(".hermit")
 BOOL WINAPI _VirtualProtect(LPVOID lpAddress, SIZE_T dwSize, DWORD flNewProtect, PDWORD lpflOldProtect)
@@ -50,26 +50,32 @@ BOOL WINAPI _VirtualProtect(LPVOID lpAddress, SIZE_T dwSize, DWORD flNewProtect,
 	return VirtualProtect(lpAddress, dwSize, flNewProtect, lpflOldProtect);
 }
 
-#pragma code_seg(".hermit")
+/*#pragma code_seg(".hermit")
 BOOL WINAPI decrypt(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
 	PIMAGE_DOS_HEADER pImageDosHeader = (PIMAGE_DOS_HEADER) hinstDLL;
-	PIMAGE_NT_HEADERS64 pImageNtHeaders64 = CALC_OFFSET(PIMAGE_NT_HEADERS64, pImageDosHeader, pImageDosHeader->e_lfanew);
 
-	if (pImageNtHeaders64->Signature != IMAGE_NT_SIGNATURE)
+#ifdef _BUILD32
+	PIMAGE_NT_HEADERS32 pImageNtHeaders = CALC_OFFSET(PIMAGE_NT_HEADERS32, pImageDosHeader, pImageDosHeader->e_lfanew);
+#elif _BUILD64
+	PIMAGE_NT_HEADERS64 pImageNtHeaders = CALC_OFFSET(PIMAGE_NT_HEADERS64, pImageDosHeader, pImageDosHeader->e_lfanew);
+#endif
+
+
+	if (pImageNtHeaders->Signature != IMAGE_NT_SIGNATURE)
 	{	// I'm invalid file?
 		return FALSE;	
 	}
 	
-	short NumberOfSections = pImageNtHeaders64->FileHeader.NumberOfSections;
+	short NumberOfSections = pImageNtHeaders->FileHeader.NumberOfSections;
 
-	for(PIMAGE_SECTION_HEADER pSection = IMAGE_FIRST_SECTION(pImageNtHeaders64); NumberOfSections > 0; NumberOfSections--, pSection++)
+	for(PIMAGE_SECTION_HEADER pSection = IMAGE_FIRST_SECTION(pImageNtHeaders); NumberOfSections > 0; NumberOfSections--, pSection++)
 	{
 		if (pSection->Characteristics & 0x02)
 		{	// packed section!
 			DWORD dwOldPermissions = NULL, dwDummy = 0;
 
-			LPVOID lpAddress = rva2addr(pImageDosHeader, pImageNtHeaders64, (LPVOID) pSection->VirtualAddress);
+			LPVOID lpAddress = rva2addr(pImageDosHeader, pImageNtHeaders, (LPVOID) pSection->VirtualAddress);
 
 			_VirtualProtect(lpAddress, pSection->Misc.VirtualSize, PAGE_READWRITE, &dwOldPermissions);
 
@@ -83,17 +89,17 @@ BOOL WINAPI decrypt(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 
 			// apply reloc in current directory!
-			Reloc_Process((LPVOID) pImageDosHeader, pImageNtHeaders64, pSection, lpRelocAddress, dwRelocSize);
+			Reloc_Process((LPVOID) pImageDosHeader, pImageNtHeaders, pSection, lpRelocAddress, dwRelocSize);
 			
 			_VirtualProtect(lpAddress, pSection->Misc.VirtualSize, dwOldPermissions, &dwDummy);
 		}
 	}
 	
 	return TRUE;
-}
+}*/
 
-#pragma code_seg(".hermit")
-BOOL WINAPI DLLCIPPA(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+//#pragma code_seg(".hermit")
+/*BOOL WINAPI DLLCIPPA(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
 	BOOL bReturn = TRUE;
 
@@ -126,3 +132,4 @@ BOOL WINAPI DLLCIPPA(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 	return TRUE;
 }
+*/
