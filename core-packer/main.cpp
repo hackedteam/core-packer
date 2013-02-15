@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
 #define _PACKAGENAME "packer64"
 #endif
 
-	TCLAP::CmdLine cmdline(_PACKAGENAME, ' ', "0.4");
+	TCLAP::CmdLine cmdline(_PACKAGENAME, ' ', "0.5 - XPACK FIGHT!");
 	
 	TCLAP::ValueArg<std::string> inputFile("i", "infile", "Input file", true, "homer", "filename");
 	TCLAP::ValueArg<std::string> outputFile("o", "outfile", "Output file", false, "homer", "filename");
