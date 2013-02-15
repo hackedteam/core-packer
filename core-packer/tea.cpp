@@ -1,11 +1,9 @@
 /**
  **/
-#pragma section(".peexe", read, execute)
-
 typedef unsigned int uint32_t;
 
-#pragma code_seg(".peexe")
-void encrypt (uint32_t* v, uint32_t* k) {
+//#pragma code_seg(".peexe")
+void tea_encrypt (uint32_t* v, uint32_t* k) {
     uint32_t v0=v[0], v1=v[1], sum=0, i;           /* set up */
     uint32_t delta=0x9e3779b9;                     /* a key schedule constant */
     uint32_t k0=k[0], k1=k[1], k2=k[2], k3=k[3];   /* cache key */
@@ -17,8 +15,18 @@ void encrypt (uint32_t* v, uint32_t* k) {
     v[0]=v0; v[1]=v1;
 }
 
+#pragma section(".peexe", read, execute)
+
 #pragma code_seg(".peexe")
-void decrypt (uint32_t* v, uint32_t* k) {
+void tea_decrypt_end_marker(void)
+{
+	
+	return;
+}
+
+
+#pragma code_seg(".peexe")
+void tea_decrypt (uint32_t* v, uint32_t* k) {
     uint32_t v0=v[0], v1=v[1], sum=0xC6EF3720, i;  /* set up */
     uint32_t delta=0x9e3779b9;                     /* a key schedule constant */
     uint32_t k0=k[0], k1=k[1], k2=k[2], k3=k[3];   /* cache key */
@@ -28,4 +36,5 @@ void decrypt (uint32_t* v, uint32_t* k) {
         sum -= delta;                                   
     }                                              /* end cycle */
     v[0]=v0; v[1]=v1;
+
 }

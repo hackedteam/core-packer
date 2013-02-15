@@ -191,7 +191,9 @@
     <ClCompile Include="DllEntryPoint32.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="DllEntryPoint64.cpp" />
+    <ClCompile Include="DllEntryPoint64.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="ExeEntryPoint32.cpp" />
     <ClCompile Include="library.cpp" />
     <ClCompile Include="LoadLibrary.cpp" />

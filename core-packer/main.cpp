@@ -9,31 +9,31 @@ extern BOOL WINAPI DllEntryPoint(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpv
 int main(int argc, char *argv[])
 {
 #ifdef _BUILD32
-	TCLAP::CmdLine cmdline("packer32", ' ', "0.4");
+#define _PACKAGENAME "packer32"
+#else
+#define _PACKAGENAME "packer64"
+#endif
+
+	TCLAP::CmdLine cmdline(_PACKAGENAME, ' ', "0.4");
 	
 	TCLAP::ValueArg<std::string> inputFile("i", "infile", "Input file", true, "homer", "filename");
 	TCLAP::ValueArg<std::string> outputFile("o", "outfile", "Output file", false, "homer", "filename");
+	TCLAP::ValueArg<std::string> verbose("v", "verbose", "Verbose output", false, "", "");
 
 	cmdline.add(inputFile);
 	cmdline.add(outputFile);
-
+	cmdline.add(verbose);
+	
+	//cmdline.parse(argc, argv);
 	//cmdline.parse(argc, argv);
 
+#ifdef _BUILD32
 	extern int main32(int, char*argv[]);
 	return main32(argc, argv);
 #else
-	TCLAP::CmdLine cmdline("packer64", ' ', "0.4");
-	
-	TCLAP::ValueArg<std::string> inputFile("i", "infile", "Input file", true, "homer", "filename");
-	TCLAP::ValueArg<std::string> outputFile("o", "outfile", "Output file", false, "homer", "filename");
-
-	cmdline.add(inputFile);
-	cmdline.add(outputFile);
-
-	//cmdline.parse(argc, argv);
-
 	extern int main64(int argc, char *argv[]);
 	return main64(argc, argv);
 #endif
+
 
 }
