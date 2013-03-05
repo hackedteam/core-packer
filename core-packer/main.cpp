@@ -19,17 +19,30 @@ int main(int argc, char *argv[])
 	TCLAP::ValueArg<std::string> inputFile("i", "infile", "Input file", true, "homer", "filename");
 	TCLAP::ValueArg<std::string> outputFile("o", "outfile", "Output file", false, "homer", "filename");
 	TCLAP::ValueArg<std::string> verbose("v", "verbose", "Verbose output", false, "", "");
+	TCLAP::ValueArg<std::string> test("t", "testmode", "Enable test mode", false, "", "");
 
 	cmdline.add(inputFile);
 	cmdline.add(outputFile);
 	cmdline.add(verbose);
-	
-	//cmdline.parse(argc, argv);
+	cmdline.add(test);
+
 	//cmdline.parse(argc, argv);
 
 #ifdef _BUILD32
+	
+#ifdef _TESTCASE
+
+	extern int main32_test(int argc, char *argv[]);
+	return main32_test(argc, argv);
+#else
 	extern int main32(int, char*argv[]);
 	return main32(argc, argv);
+#endif
+	
+	
+	
+	
+	
 #else
 	extern int main64(int argc, char *argv[]);
 	return main64(argc, argv);

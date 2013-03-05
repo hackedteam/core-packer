@@ -19,6 +19,15 @@
     <Filter Include="asm">
       <UniqueIdentifier>{176c3d2e-2681-4b78-88a8-0b67aa6df10c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\peasm">
+      <UniqueIdentifier>{5708e92c-22b1-4d7a-bcdd-831328ce9077}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\peasm">
+      <UniqueIdentifier>{0fac6947-e136-477c-8d9c-24b7b647a938}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\stub">
+      <UniqueIdentifier>{1673165e-ff14-4ff2-81cc-4a01c1c3647f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tclap\Arg.h">
@@ -129,17 +138,17 @@
     <ClInclude Include="dll64.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="peasm\peasm.h">
+      <Filter>Header Files\peasm</Filter>
+    </ClInclude>
+    <ClInclude Include="peasm\pesection.h">
+      <Filter>Header Files\peasm</Filter>
+    </ClInclude>
+    <ClInclude Include="peasm\types.h">
+      <Filter>Header Files\peasm</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="DllEntryPoint.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="DllEntryPoint32.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="DllEntryPoint64.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="library.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -170,11 +179,32 @@
     <ClCompile Include="tea.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ExeEntryPoint32.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="patchutils.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="peasm\peasm.cpp">
+      <Filter>Source Files\peasm</Filter>
+    </ClCompile>
+    <ClCompile Include="peasm\pesection.cpp">
+      <Filter>Source Files\peasm</Filter>
+    </ClCompile>
+    <ClCompile Include="ExeEntryPoint32.cpp">
+      <Filter>Source Files\stub</Filter>
+    </ClCompile>
+    <ClCompile Include="DllEntryPoint.cpp">
+      <Filter>Source Files\stub</Filter>
+    </ClCompile>
+    <ClCompile Include="DllEntryPoint32.cpp">
+      <Filter>Source Files\stub</Filter>
+    </ClCompile>
+    <ClCompile Include="DllEntryPoint64.cpp">
+      <Filter>Source Files\stub</Filter>
+    </ClCompile>
+    <ClCompile Include="peasm\pe_i386.cpp">
+      <Filter>Source Files\peasm</Filter>
+    </ClCompile>
+    <ClCompile Include="peasm\pe_amd64.cpp">
+      <Filter>Source Files\peasm</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

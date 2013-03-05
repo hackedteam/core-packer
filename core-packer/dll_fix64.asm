@@ -1,6 +1,6 @@
 option casemap :none
 
-hermit64 SEGMENT READ EXECUTE ALIAS('.hermit')
+hermit64 SEGMENT READ EXECUTE ALIAS('.pedll64')
 
 ;public _VirtualProtect
 ;public _VirtualAlloc
