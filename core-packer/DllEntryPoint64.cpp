@@ -304,8 +304,8 @@ void _DisableThreadLibraryCalls(HMODULE hKernel32, HINSTANCE hInstance)
 #pragma code_seg(".pedll64")
 BOOL WINAPI DllEntryPoint(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-	char szKernel32[] = { 'K', 'E', 'R', 'N', 'E', 'L', '3', '2', 0x00 };
-	char szVirtualProtect[] = { 'V', 'i', 'r', 't', 'u', 'a', 'l', 'P', 'r', 'o', 't', 'e', 'c', 't', 0x00 };
+	__declspec(align(16)) char szKernel32[] = { 'K', 'E', 'R', 'N', 'E', 'L', '3', '2', 0x00 };
+	__declspec(align(16)) char szVirtualProtect[] = { 'V', 'i', 'r', 't', 'u', 'a', 'l', 'P', 'r', 'o', 't', 'e', 'c', 't', 0x00 };
 
 	if (fdwReason == DLL_PROCESS_ATTACH)
 	{

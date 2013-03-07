@@ -22,15 +22,14 @@ extern DWORD NextVirtualAddress64(PIMAGE_NT_HEADERS64 pHeader);
 
 void Patch_EXPORT_SYMBOL(LPVOID lpBaseBlock, LPBYTE lpInitialMem, DWORD dwSize, LPVOID lpSignature, DWORD newOffset, DWORD oldOffset)
 {
-	LPVOID lpInitialByte = FindBlockMem((LPBYTE) lpInitialMem, dwSize, lpSignature, 0x16);
+	LPVOID lpInitialByte = FindBlockMem((LPBYTE) lpInitialMem, dwSize, lpSignature, 0x38);
 
 	if (lpInitialByte != NULL)
 	{
-		LPBYTE c = CALC_OFFSET(LPBYTE, lpInitialByte, 0x11);
-		DWORD dwNewValue = diff_rva32(NULL, NULL, oldOffset, newOffset+0x16);
+		LPBYTE c = CALC_OFFSET(LPBYTE, lpInitialByte, 0x33);
+		DWORD dwNewValue = diff_rva32(NULL, NULL, oldOffset, newOffset+0x38);
 		Patch_JMP(c, dwNewValue);
 	}
-
 }
 
 #define SECTION_RANDOM_NAME	15
