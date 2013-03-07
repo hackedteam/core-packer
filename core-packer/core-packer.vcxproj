@@ -27,7 +27,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -81,7 +81,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_BUILD32;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -113,6 +113,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
+      <DisableSpecificWarnings>4530</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -156,6 +157,9 @@
     <ClInclude Include="LoadLibrary.h" />
     <ClInclude Include="macro.h" />
     <ClInclude Include="patchutils.h" />
+    <ClInclude Include="peasm\peasm.h" />
+    <ClInclude Include="peasm\pesection.h" />
+    <ClInclude Include="peasm\types.h" />
     <ClInclude Include="rc4.h" />
     <ClInclude Include="reloc.h" />
     <ClInclude Include="rva.h" />
@@ -193,6 +197,7 @@
     </ClCompile>
     <ClCompile Include="DllEntryPoint64.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="ExeEntryPoint32.cpp" />
     <ClCompile Include="library.cpp" />
@@ -203,8 +208,13 @@
     </ClCompile>
     <ClCompile Include="main64.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="patchutils.cpp" />
+    <ClCompile Include="peasm\peasm.cpp" />
+    <ClCompile Include="peasm\pesection.cpp" />
+    <ClCompile Include="peasm\pe_amd64.cpp" />
+    <ClCompile Include="peasm\pe_i386.cpp" />
     <ClCompile Include="rc4.cpp" />
     <ClCompile Include="reloc.cpp" />
     <ClCompile Include="rva.cpp" />

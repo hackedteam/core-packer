@@ -28,6 +28,8 @@ extern "C" VOID WINAPI _FakeEntryPoint6();
 extern "C" VOID WINAPI _FakeEntryPoint7();
 extern "C" VOID WINAPI _FakeEntryPoint8();
 extern "C" VOID WINAPI _FakeEntryPoint9();
-
+extern "C" VOID WINAPI _FakeEntryPointA();
+extern "C" VOID WINAPI _FakeEntryPointB();
+extern "C" VOID WINAPI _FakeEntryPointC();
 
 #endif

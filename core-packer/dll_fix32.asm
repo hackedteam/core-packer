@@ -2,13 +2,13 @@
 
 option casemap :none
 
-hermit SEGMENT PUBLIC READ EXECUTE ALIAS('.hermit')
+code SEGMENT PUBLIC READ EXECUTE ALIAS('.pedll32')
 
 ;public _VirtualProtect
 ;public _VirtualAlloc
 public g_hKernel32
-public _LoadLibraryA
-public _GetProcAddress
+public _dll32_LoadLibraryA
+public _dll32_GetProcAddress
 public _EntryPoint
 
 public _FakeEntryPoint0
@@ -22,7 +22,7 @@ public _FakeEntryPoint7
 public _FakeEntryPoint8
 public _FakeEntryPoint9
 
-extern DELAYDECRYPT@0 : PROC
+extern DELAYDECRYPT@4 : PROC
 extern DELAYENCRYPT@0 : PROC
 
 g_hKernel32	dd	?	; symbol!
@@ -40,7 +40,7 @@ g_hKernel32	dd	?	; symbol!
 ;_VirtualAlloc ENDP
 
 ; LoadLibraryA
-_LoadLibraryA PROC param1: DWORD
+_dll32_LoadLibraryA PROC param1: DWORD
 	mov esp, ebp
 	pop ebp
 	mov eax, dword ptr [g_hKernel32]
@@ -51,9 +51,9 @@ _LoadLibraryA PROC param1: DWORD
 	nop
 	nop
 	nop
-_LoadLibraryA ENDP
+_dll32_LoadLibraryA ENDP
 
-_GetProcAddress PROC param1: DWORD, param2: DWORD
+_dll32_GetProcAddress PROC param1: DWORD, param2: DWORD
 	mov esp, ebp
 	pop ebp
 	mov eax, dword ptr [g_hKernel32]
@@ -64,7 +64,7 @@ _GetProcAddress PROC param1: DWORD, param2: DWORD
 	nop
 	nop
 	nop
-_GetProcAddress ENDP
+_dll32_GetProcAddress ENDP
 
 
 _SetFilePointer PROC param1: DWORD, param2: DWORD, param3: DWORD, p4: DWORD
@@ -146,12 +146,14 @@ _FakeEntryPoint0 PROC
 	push ebp
 	mov ebp, esp
 	;pushad
-	call DELAYDECRYPT@0
+	xor eax, eax
+	mov eax, 10001000h
+	push eax
+	call DELAYDECRYPT@4
 
 	;popad
 	mov esp, ebp
 	pop ebp
-	add eax, 10001000h
 	jmp eax
 _FakeEntryPoint0 ENDP
 
@@ -159,12 +161,14 @@ _FakeEntryPoint1 PROC
 	push ebp
 	mov ebp, esp
 	;pushad
-	call DELAYDECRYPT@0
+	xor eax, eax
+	mov eax, 10001000h
+	push eax
+	call DELAYDECRYPT@4
 
 	;popad
 	mov esp, ebp
 	pop ebp
-	add eax, 10001000h
 	jmp eax
 _FakeEntryPoint1 ENDP
 
@@ -172,12 +176,14 @@ _FakeEntryPoint2 PROC
 	push ebp
 	mov ebp, esp
 	;pushad
-	call DELAYDECRYPT@0
+	xor eax, eax
+	mov eax, 10001000h
+	push eax
+	call DELAYDECRYPT@4
 
 	;popad
 	mov esp, ebp
 	pop ebp
-	add eax, 10001000h
 	jmp eax
 _FakeEntryPoint2 ENDP
 
@@ -185,12 +191,14 @@ _FakeEntryPoint3 PROC
 	push ebp
 	mov ebp, esp
 	;pushad
-	call DELAYDECRYPT@0
+	xor eax, eax
+	mov eax, 10001000h
+	push eax
+	call DELAYDECRYPT@4
 
 	;popad
 	mov esp, ebp
 	pop ebp
-	add eax, 10001000h
 	jmp eax
 _FakeEntryPoint3 ENDP
 
@@ -198,12 +206,14 @@ _FakeEntryPoint4 PROC
 	push ebp
 	mov ebp, esp
 	;pushad
-	call DELAYDECRYPT@0
+	xor eax, eax
+	mov eax, 10001000h
+	push eax
+	call DELAYDECRYPT@4
 
 	;popad
 	mov esp, ebp
 	pop ebp
-	add eax, 10001000h
 	jmp eax
 _FakeEntryPoint4 ENDP
 
@@ -211,12 +221,14 @@ _FakeEntryPoint5 PROC
 	push ebp
 	mov ebp, esp
 	;pushad
-	call DELAYDECRYPT@0
+	xor eax, eax
+	mov eax, 10001000h
+	push eax
+	call DELAYDECRYPT@4
 
 	;popad
 	mov esp, ebp
 	pop ebp
-	add eax, 10001000h
 	jmp eax
 _FakeEntryPoint5 ENDP
 
@@ -224,12 +236,14 @@ _FakeEntryPoint6 PROC
 	push ebp
 	mov ebp, esp
 	;pushad
-	call DELAYDECRYPT@0
+	xor eax, eax
+	mov eax, 10001000h
+	push eax
+	call DELAYDECRYPT@4
 
 	;popad
 	mov esp, ebp
 	pop ebp
-	add eax, 10001000h
 	jmp eax
 _FakeEntryPoint6 ENDP
 
@@ -237,12 +251,14 @@ _FakeEntryPoint7 PROC
 	push ebp
 	mov ebp, esp
 	;pushad
-	call DELAYDECRYPT@0
+	xor eax, eax
+	mov eax, 10001000h
+	push eax
+	call DELAYDECRYPT@4
 
 	;popad
 	mov esp, ebp
 	pop ebp
-	add eax, 10001000h
 	jmp eax
 _FakeEntryPoint7 ENDP
 
@@ -250,12 +266,14 @@ _FakeEntryPoint8 PROC
 	push ebp
 	mov ebp, esp
 	;pushad
-	call DELAYDECRYPT@0
+	xor eax, eax
+	mov eax, 10001000h
+	push eax
+	call DELAYDECRYPT@4
 
 	;popad
 	mov esp, ebp
 	pop ebp
-	add eax, 10001000h
 	jmp eax
 _FakeEntryPoint8 ENDP
 
@@ -263,13 +281,60 @@ _FakeEntryPoint9 PROC
 	push ebp
 	mov ebp, esp
 	;pushad
-	call DELAYDECRYPT@0
+	xor eax, eax
+	mov eax, 10001000h
+	push eax
+	call DELAYDECRYPT@4
 
 	;popad
 	mov esp, ebp
 	pop ebp
-	add eax, 10001000h
 	jmp eax
 _FakeEntryPoint9 ENDP
+
+_FakeEntryPointA PROC
+	push ebp
+	mov ebp, esp
+	;pushad
+	xor eax, eax
+	mov eax, 10001000h
+	push eax
+	call DELAYDECRYPT@4
+
+	;popad
+	mov esp, ebp
+	pop ebp
+	jmp eax
+_FakeEntryPointA ENDP
+
+_FakeEntryPointB PROC
+	push ebp
+	mov ebp, esp
+	;pushad
+	xor eax, eax
+	mov eax, 10001000h
+	push eax
+	call DELAYDECRYPT@4
+
+	;popad
+	mov esp, ebp
+	pop ebp
+	jmp eax
+_FakeEntryPointB ENDP
+
+_FakeEntryPointC PROC
+	push ebp
+	mov ebp, esp
+	;pushad
+	xor eax, eax
+	mov eax, 10001000h
+	push eax
+	call DELAYDECRYPT@4
+
+	;popad
+	mov esp, ebp
+	pop ebp
+	jmp eax
+_FakeEntryPointC ENDP
 
 end

@@ -1,8 +1,7 @@
 #include <Windows.h>
 
-#pragma section(".hermit", read, execute)
+//#pragma section(".hermit", read, execute)
 
-#pragma code_seg(".hermit")
 void swap(PBYTE a, PBYTE b)
 {
 	BYTE tmp = *a;
@@ -11,14 +10,12 @@ void swap(PBYTE a, PBYTE b)
 	*b = tmp;
 }
 
-#pragma code_seg(".hermit")
 void init_sbox(LPBYTE RC4_SBOX)
 {
 	for (int i = 0; i < 256; i++)
 		RC4_SBOX[i] = i;
 }
 
-#pragma code_seg(".hermit")
 void init_sbox_key(LPBYTE RC4_SBOX, PBYTE key, int length)
 {
 	int j = 0;
@@ -30,7 +27,6 @@ void init_sbox_key(LPBYTE RC4_SBOX, PBYTE key, int length)
 	}
 }
 
-#pragma code_seg(".hermit")
 void cypher_msg(LPBYTE RC4_SBOX, PBYTE msg, int length)
 {
 	int i=0, j=0;

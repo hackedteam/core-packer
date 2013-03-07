@@ -254,6 +254,10 @@ BOOL CLoadLibrary::SaveLibrary64ToFile(TCHAR* lpOutFileName)
 	return TRUE;
 } 
 
+/**
+ *	\!GetNTHeader
+ *
+ **/
 PIMAGE_NT_HEADERS CLoadLibrary::GetNTHeader()
 {
 	if (_lpBaseAddress != NULL)

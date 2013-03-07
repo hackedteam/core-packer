@@ -7,19 +7,28 @@ typedef FARPROC (WINAPI *GetProcAddress_ptr)(HMODULE hModule, LPCSTR lpProcName)
 typedef LPVOID (WINAPI *VirtualAlloc_ptr)(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect);
 typedef BOOL (WINAPI *VirtualProtect_ptr)(LPVOID lpAddress, SIZE_T dwSize, DWORD flNewProtect, PDWORD lpflOldProtect);
 
+/////////////////////////////////////////////////////////////////////
+// Critical section pointers
+typedef void (WINAPI *InitializeCriticalSection_ptr)(LPCRITICAL_SECTION lpCriticalSection);
+typedef void (WINAPI *EnterCriticalSection_ptr)(LPCRITICAL_SECTION lpCriticalSection);
+typedef void (WINAPI *LeaveCriticalSection_ptr)(LPCRITICAL_SECTION lpCriticalSection);
+typedef void (WINAPI *DeleteCriticalSection_ptr)(LPCRITICAL_SECTION lpCriticalSection);
+
 typedef BOOL (WINAPI *DllMain_ptr)(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
 
 typedef HMODULE (WINAPI *GetModuleHandleA_ptr)(LPCTSTR lpModuleName);
 
 typedef HANDLE (WINAPI *CreateFileA_ptr)(LPCTSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
 
+typedef DWORD (WINAPI *SetFilePointer_ptr)(HANDLE hFile, LONG lDistanceToMove, PLONG lpDistanceToMoveHigh, DWORD dwMoveMethod);
+
 #ifdef _BUILD32
 extern "C" 
 {
-HMODULE WINAPI _LoadLibraryA(LPCTSTR lpFileName);
+HMODULE WINAPI _dll32_LoadLibraryA(LPCTSTR lpFileName);
 HMODULE WINAPI _exe_LoadLibraryA(LPCTSTR lpFileName);
 
-FARPROC WINAPI _GetProcAddress(HMODULE hModule, LPCSTR lpProcName);
+FARPROC WINAPI _dll32_GetProcAddress(HMODULE hModule, LPCSTR lpProcName);
 FARPROC WINAPI _exe_GetProcAddress(HMODULE hModule, LPCSTR lpProcName);
 
 HANDLE WINAPI _CreateFileA(LPCTSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);

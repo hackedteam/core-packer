@@ -1,9 +1,6 @@
 #include <Windows.h>
 #include "rva.h"
 
-#pragma section(".hermit", read, write, execute)
-
-#pragma code_seg(".hermit")
 LPVOID rva2addr(PIMAGE_DOS_HEADER pImageDosHeader, PIMAGE_NT_HEADERS64 pImageNtHeaders64, LPVOID lpAddress)
 {
 	ULONG64 dwImageDosHeader = (ULONG64) pImageDosHeader;	// new base address!
@@ -31,7 +28,6 @@ DWORD diff_rva64(PIMAGE_DOS_HEADER pImageDosHeader, PIMAGE_NT_HEADERS64 pImageNt
 	}
 }
 
-#pragma code_seg(".hermit")
 LPVOID rva2addr(PIMAGE_DOS_HEADER pImageDosHeader, PIMAGE_NT_HEADERS32 pImageNtHeaders32, LPVOID lpAddress)
 {
 	ULONG64 dwImageDosHeader = (ULONG) pImageDosHeader;	// new base address!
