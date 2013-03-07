@@ -20,14 +20,31 @@ extern DWORD NextPointerToRawData64(PIMAGE_NT_HEADERS64 pHeader);
 extern DWORD NextVirtualAddress(PIMAGE_NT_HEADERS pHeader);
 extern DWORD NextVirtualAddress64(PIMAGE_NT_HEADERS64 pHeader);
 
-void Patch_EXPORT_SYMBOL(LPVOID lpBaseBlock, LPBYTE lpInitialMem, DWORD dwSize, LPVOID lpSignature, DWORD newOffset, DWORD oldOffset)
+#define DIFF(b, a) (DWORD)((ULONG64) b - (ULONG64) a)
+
+#define MAGIC_EXPORT_SYMBOL 0x0BABECAFEBAD00000
+
+DWORD OffsetMagic(LPVOID lpBlock, DWORD dwSignature, ULONG64 magic)
 {
-	LPVOID lpInitialByte = FindBlockMem((LPBYTE) lpInitialMem, dwSize, lpSignature, 0x16);
+	LPVOID x = FindBlockMem((LPBYTE) lpBlock, dwSignature, &magic, sizeof(ULONG64));
+
+	if (x != NULL)
+	{	// block found
+		return DIFF(x, lpBlock);		
+	}
+
+	return -1;
+}
+
+void Patch_EXPORT_SYMBOL(LPVOID lpBaseBlock, LPBYTE lpInitialMem, DWORD dwSize, LPVOID lpSignature, DWORD dwSignatureSize, DWORD newOffset, DWORD oldOffset)
+{
+	LPVOID lpInitialByte = FindBlockMem((LPBYTE) lpInitialMem, dwSize, lpSignature, dwSignatureSize);
 
 	if (lpInitialByte != NULL)
 	{
-		LPBYTE c = CALC_OFFSET(LPBYTE, lpInitialByte, 0x11);
-		DWORD dwNewValue = diff_rva32(NULL, NULL, oldOffset, newOffset+0x16);
+		DWORD MagicJumpOffset = OffsetMagic(lpInitialByte, dwSignatureSize, MAGIC_EXPORT_SYMBOL) - 1;
+		LPBYTE c = CALC_OFFSET(LPBYTE, lpInitialByte, MagicJumpOffset);
+		DWORD dwNewValue = diff_rva32(NULL, NULL, oldOffset, newOffset+MagicJumpOffset+5);
 		Patch_JMP(c, dwNewValue);
 	}
 
@@ -617,6 +634,8 @@ int main64(int argc, char *argv[])
 	 **/
 	if (pTarget->IsDLL())
 	{	// DLL - Patch 
+		DWORD dwSignatureSize = table[1] - table[0];
+
 		for(int i=0; i < ExportDirectory->NumberOfFunctions; i++)
 		{
 			ULONG64 exportRVA = table[i];
@@ -624,7 +643,7 @@ int main64(int argc, char *argv[])
 			exportSymbolEntryPoint = pTargetSection->VirtualAddress() + basesize + exportSymbolEntryPoint; // - pInfectMeNtHeader->OptionalHeader.SectionAlignment;
 			DWORD dwOldValue = AddressOfFunctions[i];
 			AddressOfFunctions[i] = exportSymbolEntryPoint;
-			Patch_EXPORT_SYMBOL(pTarget, (LPBYTE) lpRawDestin, pUnpackerCode->SizeOfRawData, (LPVOID) table[i], exportSymbolEntryPoint, dwOldValue);
+			Patch_EXPORT_SYMBOL(pTarget, (LPBYTE) lpRawDestin, pUnpackerCode->SizeOfRawData, (LPVOID) table[i], dwSignatureSize, exportSymbolEntryPoint, dwOldValue);
 
 		}
 	}

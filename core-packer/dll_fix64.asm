@@ -53,142 +53,191 @@ _EntryPoint PROC
 _EntryPoint ENDP
 
 _FakeEntryPoint0 PROC
-	push rcx
-	push rdx
-	push r8
-	push r9
+	sub rsp, 48h
+	mov [rsp+00h], rcx
+	mov [rsp+08h], rdx
+	mov [rsp+10h], r8
+	mov [rsp+18h], r9
+
 	call DELAYDECRYPT
-	pop r9
-	pop r8
-	pop rdx
-	pop rcx
+
+	mov r9, [rsp+18h]
+	mov r8, [rsp+10h]
+	mov rdx, [rsp+08h]
+	mov rcx, [rsp+00h]
+	add rsp, 48h
 
 	db 0e9h
 	dq 0BABECAFEBAD00000h
 _FakeEntryPoint0 ENDP
 
 _FakeEntryPoint1 PROC
-	push rcx
-	push rdx
-	push r8
-	push r9
+	sub rsp, 48h
+	mov [rsp+00h], rcx
+	mov [rsp+08h], rdx
+	mov [rsp+10h], r8
+	mov [rsp+18h], r9
+
 	call DELAYDECRYPT
-	pop r9
-	pop r8
-	pop rdx
-	pop rcx
+
+	mov r9, [rsp+18h]
+	mov r8, [rsp+10h]
+	mov rdx, [rsp+08h]
+	mov rcx, [rsp+00h]
+	add rsp, 48h
+
 	db 0e9h
 	dq 0BABECAFEBAD00000h
 _FakeEntryPoint1 ENDP
 
 _FakeEntryPoint2 PROC
-	push rcx
-	push rdx
-	push r8
-	push r9
+	sub rsp, 48h
+	mov [rsp+00h], rcx
+	mov [rsp+08h], rdx
+	mov [rsp+10h], r8
+	mov [rsp+18h], r9
+
 	call DELAYDECRYPT
-	pop r9
-	pop r8
-	pop rdx
-	pop rcx
+
+	mov r9, [rsp+18h]
+	mov r8, [rsp+10h]
+	mov rdx, [rsp+08h]
+	mov rcx, [rsp+00h]
+	add rsp, 48h
+
 	db 0e9h
 	dq 0BABECAFEBAD00000h
 _FakeEntryPoint2 ENDP
 
 _FakeEntryPoint3 PROC
-	push rcx
-	push rdx
-	push r8
-	push r9
+	sub rsp, 48h
+	mov [rsp+00h], rcx
+	mov [rsp+08h], rdx
+	mov [rsp+10h], r8
+	mov [rsp+18h], r9
+
 	call DELAYDECRYPT
-	pop r9
-	pop r8
-	pop rdx
-	pop rcx
+
+	mov r9, [rsp+18h]
+	mov r8, [rsp+10h]
+	mov rdx, [rsp+08h]
+	mov rcx, [rsp+00h]
+	add rsp, 48h
+
 	db 0e9h
 	dq 0BABECAFEBAD00000h
 _FakeEntryPoint3 ENDP
 
 _FakeEntryPoint4 PROC
-	push rcx
-	push rdx
-	push r8
-	push r9
+	sub rsp, 48h
+	mov [rsp+00h], rcx
+	mov [rsp+08h], rdx
+	mov [rsp+10h], r8
+	mov [rsp+18h], r9
+
 	call DELAYDECRYPT
-	pop r9
-	pop r8
-	pop rdx
-	pop rcx
+
+	mov r9, [rsp+18h]
+	mov r8, [rsp+10h]
+	mov rdx, [rsp+08h]
+	mov rcx, [rsp+00h]
+	add rsp, 48h
+
 	db 0e9h
 	dq 0BABECAFEBAD00000h
 _FakeEntryPoint4 ENDP
 
 _FakeEntryPoint5 PROC
-	push rcx
-	push rdx
-	push r8
-	push r9
+	sub rsp, 48h
+	mov [rsp+00h], rcx
+	mov [rsp+08h], rdx
+	mov [rsp+10h], r8
+	mov [rsp+18h], r9
+
 	call DELAYDECRYPT
-	pop r9
-	pop r8
-	pop rdx
-	pop rcx
+
+	mov r9, [rsp+18h]
+	mov r8, [rsp+10h]
+	mov rdx, [rsp+08h]
+	mov rcx, [rsp+00h]
+	add rsp, 48h
+
 	db 0e9h
 	dq 0BABECAFEBAD00000h
 _FakeEntryPoint5 ENDP
 
 _FakeEntryPoint6 PROC
-	push rcx
-	push rdx
-	push r8
-	push r9
+	sub rsp, 48h
+	mov [rsp+00h], rcx
+	mov [rsp+08h], rdx
+	mov [rsp+10h], r8
+	mov [rsp+18h], r9
+
 	call DELAYDECRYPT
-	pop r9
-	pop r8
-	pop rdx
-	pop rcx
+
+	mov r9, [rsp+18h]
+	mov r8, [rsp+10h]
+	mov rdx, [rsp+08h]
+	mov rcx, [rsp+00h]
+	add rsp, 48h
+
 	db 0e9h
 	dq 0BABECAFEBAD00000h
 _FakeEntryPoint6 ENDP
 
 _FakeEntryPoint7 PROC
-	push rcx
-	push rdx
-	push r8
-	push r9
+	sub rsp, 48h
+	mov [rsp+00h], rcx
+	mov [rsp+08h], rdx
+	mov [rsp+10h], r8
+	mov [rsp+18h], r9
+
 	call DELAYDECRYPT
-	pop r9
-	pop r8
-	pop rdx
-	pop rcx
+
+	mov r9, [rsp+18h]
+	mov r8, [rsp+10h]
+	mov rdx, [rsp+08h]
+	mov rcx, [rsp+00h]
+	add rsp, 48h
+
 	db 0e9h
 	dq 0BABECAFEBAD00000h
 _FakeEntryPoint7 ENDP
 
 _FakeEntryPoint8 PROC
-	push rcx
-	push rdx
-	push r8
-	push r9
+	sub rsp, 48h
+	mov [rsp+00h], rcx
+	mov [rsp+08h], rdx
+	mov [rsp+10h], r8
+	mov [rsp+18h], r9
+
 	call DELAYDECRYPT
-	pop r9
-	pop r8
-	pop rdx
-	pop rcx
+
+	mov r9, [rsp+18h]
+	mov r8, [rsp+10h]
+	mov rdx, [rsp+08h]
+	mov rcx, [rsp+00h]
+	add rsp, 48h
+
 	db 0e9h
 	dq 0BABECAFEBAD00000h
 _FakeEntryPoint8 ENDP
 
 _FakeEntryPoint9 PROC
-	push rcx
-	push rdx
-	push r8
-	push r9
+	sub rsp, 48h
+	mov [rsp+00h], rcx
+	mov [rsp+08h], rdx
+	mov [rsp+10h], r8
+	mov [rsp+18h], r9
+
 	call DELAYDECRYPT
-	pop r9
-	pop r8
-	pop rdx
-	pop rcx
+
+	mov r9, [rsp+18h]
+	mov r8, [rsp+10h]
+	mov rdx, [rsp+08h]
+	mov rcx, [rsp+00h]
+	add rsp, 48h
+
 	db 0e9h
 	dq 0BABECAFEBAD00000h
 _FakeEntryPoint9 ENDP
