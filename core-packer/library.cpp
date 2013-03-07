@@ -182,8 +182,16 @@ LPVOID InternalLoadLibrary(TCHAR* lpFileName, DWORD dwAdditionalPages)
 			return NULL;
 		}
 
-		SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
-		ReadFile(hFile, lpBase, section.PointerToRawData, &numberOfBytesread, NULL);
+		if (section.PointerToRawData == 0)
+		{
+			SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
+			ReadFile(hFile, lpBase, 0x400, &numberOfBytesread, NULL);
+		}
+		else
+		{
+			SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
+			ReadFile(hFile, lpBase, section.PointerToRawData, &numberOfBytesread, NULL);
+		}
 
 		PIMAGE_SECTION_HEADER sections = (PIMAGE_SECTION_HEADER)((DWORD)(lpBase) + sizeHeader);
 

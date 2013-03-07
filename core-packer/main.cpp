@@ -29,7 +29,12 @@ int main(int argc, char *argv[])
 
 #ifdef _BUILD32
 	extern int main32(int, char*argv[]);
-	return main32(argc, argv);
+	extern int unpack32(int, char*argv[]);
+
+	if (argv[1][0] == '-' && argv[1][1] == 'u')
+		return unpack32(argc, argv);
+	else
+		return main32(argc, argv);
 #else
 	extern int main64(int argc, char *argv[]);
 	return main64(argc, argv);

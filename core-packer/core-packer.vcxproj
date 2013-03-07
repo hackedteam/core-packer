@@ -210,6 +210,7 @@
     <ClCompile Include="rva.cpp" />
     <ClCompile Include="symbols.cpp" />
     <ClCompile Include="tea.cpp" />
+    <ClCompile Include="unpack32.cpp" />
   </ItemGroup>
   <ItemGroup>
     <MASM Include="dll_fix32.asm">

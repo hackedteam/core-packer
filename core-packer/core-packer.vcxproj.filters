@@ -176,6 +176,9 @@
     <ClCompile Include="patchutils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="unpack32.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <MASM Include="dll_fix32.asm">
