@@ -85,7 +85,6 @@ _FakeEntryPoint1 PROC
 	mov rdx, [rsp+08h]
 	mov rcx, [rsp+00h]
 	add rsp, 48h
-
 	db 0e9h
 	dq 0BABECAFEBAD00000h
 _FakeEntryPoint1 ENDP
@@ -104,7 +103,6 @@ _FakeEntryPoint2 PROC
 	mov rdx, [rsp+08h]
 	mov rcx, [rsp+00h]
 	add rsp, 48h
-
 	db 0e9h
 	dq 0BABECAFEBAD00000h
 _FakeEntryPoint2 ENDP
@@ -123,7 +121,6 @@ _FakeEntryPoint3 PROC
 	mov rdx, [rsp+08h]
 	mov rcx, [rsp+00h]
 	add rsp, 48h
-
 	db 0e9h
 	dq 0BABECAFEBAD00000h
 _FakeEntryPoint3 ENDP
@@ -142,7 +139,6 @@ _FakeEntryPoint4 PROC
 	mov rdx, [rsp+08h]
 	mov rcx, [rsp+00h]
 	add rsp, 48h
-
 	db 0e9h
 	dq 0BABECAFEBAD00000h
 _FakeEntryPoint4 ENDP
@@ -161,7 +157,6 @@ _FakeEntryPoint5 PROC
 	mov rdx, [rsp+08h]
 	mov rcx, [rsp+00h]
 	add rsp, 48h
-
 	db 0e9h
 	dq 0BABECAFEBAD00000h
 _FakeEntryPoint5 ENDP
@@ -180,7 +175,6 @@ _FakeEntryPoint6 PROC
 	mov rdx, [rsp+08h]
 	mov rcx, [rsp+00h]
 	add rsp, 48h
-
 	db 0e9h
 	dq 0BABECAFEBAD00000h
 _FakeEntryPoint6 ENDP

@@ -47,7 +47,6 @@ void Patch_EXPORT_SYMBOL(LPVOID lpBaseBlock, LPBYTE lpInitialMem, DWORD dwSize, 
 		DWORD dwNewValue = diff_rva32(NULL, NULL, oldOffset, newOffset+MagicJumpOffset+5);
 		Patch_JMP(c, dwNewValue);
 	}
-
 }
 
 #define SECTION_RANDOM_NAME	15
