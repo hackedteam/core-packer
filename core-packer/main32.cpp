@@ -403,6 +403,7 @@ CPeAssembly *load_random(char *param)
 			}
 		}
 
+		std::cout << "[CONFIG] random file section: " << randfile << std::endl;
 		return obj;
 	}
 
@@ -576,6 +577,7 @@ int main32(int argc, char *argv[])
 		pImportDescriptor++;
 	}
 
+	
 	for(int i = 0; i < pInfectMe->NumberOfSections(); i++)
 	{	// each section must be packed
 		if (pInfectMe->IsDLL())
@@ -704,6 +706,10 @@ int main32(int argc, char *argv[])
 		basesize = 0;
 	else
 		basesize = rand() % maxoffset;	// offset
+
+	std::cout << "[CONFIG] Section Name: " << szSectionName << std::endl;
+	std::cout << "[CONFIG]         base: " << std::hex << basesize << std::endl;
+	std::cout << "[CONFIG]         size: " << std::hex << pInfectSection->VirtualSize() << std::endl;
 
 	LPVOID lpRawDestin = CALC_OFFSET(LPVOID, pInfectSection->RawData(), basesize);	// an offset inside acceptable range
 
