@@ -298,7 +298,7 @@ struct _strings
 #pragma code_seg(".peexe32")
 void WINAPI __fuckcrt0startup(struct _strings *ptr)
 {
-	ptr->szKernel32[0] = 0x4E52454B;
+	ptr->szKernel32[0] = 0x4E52456B; // bypass ESET Win32/Kryptik
 	ptr->szKernel32[1] = 0x32334C45;
 	ptr->szKernel32[2] = 0x0;
 	
