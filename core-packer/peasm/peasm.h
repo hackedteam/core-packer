@@ -65,12 +65,13 @@ public:
 	short				NumberOfSections();
 
 	CPeSection*			getSection(int index);
-	CPeSection*			LookupSectionByName(char *szSectionName);
+	CPeSection*			LookupSectionByName(const char *szSectionName);
 
 	bool				RemoveSection(int index);
-	bool				RemoveSection(char *szSectionName);
+	bool				RemoveSection(const char *szSectionName);
 
-	CPeSection*			AddSection(char *szSectionName, virtualaddress_t newva, size_t size);
+	CPeSection*			AddSection(const char *szSectionName, virtualaddress_t newva, size_t size);
+	CPeSection*			AddSection(const char *szSectionName, virtualaddress_t newva, size_t size, size_t rawsize);
 	CPeSection*			MergeSection(CPeSection *sect0, CPeSection *sect1);
 
 	void*				RawPointer(virtualaddress_t va);

@@ -151,11 +151,22 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="decrypt.h" />
+    <ClInclude Include="distorm.h" />
+    <ClInclude Include="distorm\config.h" />
+    <ClInclude Include="distorm\decoder.h" />
+    <ClInclude Include="distorm\instructions.h" />
+    <ClInclude Include="distorm\insts.h" />
+    <ClInclude Include="distorm\operands.h" />
+    <ClInclude Include="distorm\prefix.h" />
+    <ClInclude Include="distorm\textdefs.h" />
+    <ClInclude Include="distorm\wstring.h" />
+    <ClInclude Include="distorm\x86defs.h" />
     <ClInclude Include="dll32.h" />
     <ClInclude Include="dll64.h" />
     <ClInclude Include="library.h" />
     <ClInclude Include="LoadLibrary.h" />
     <ClInclude Include="macro.h" />
+    <ClInclude Include="mnemonics.h" />
     <ClInclude Include="patchutils.h" />
     <ClInclude Include="peasm\peasm.h" />
     <ClInclude Include="peasm\pesection.h" />
@@ -191,6 +202,15 @@
     <ClInclude Include="tea.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="distorm\decoder.c" />
+    <ClCompile Include="distorm\distorm.c" />
+    <ClCompile Include="distorm\instructions.c" />
+    <ClCompile Include="distorm\insts.c" />
+    <ClCompile Include="distorm\mnemonics.c" />
+    <ClCompile Include="distorm\operands.c" />
+    <ClCompile Include="distorm\prefix.c" />
+    <ClCompile Include="distorm\textdefs.c" />
+    <ClCompile Include="distorm\wstring.c" />
     <ClCompile Include="DllEntryPoint.cpp" />
     <ClCompile Include="DllEntryPoint32.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>

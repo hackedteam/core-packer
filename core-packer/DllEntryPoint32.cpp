@@ -8,7 +8,7 @@
 #include "dll32.h"
 
 #include "reloc.h"
-#include "macro.h"
+//#include "macro.h"
 #include "decrypt.h"
 
 #pragma section(".pedll32", read, write, execute)
@@ -79,6 +79,18 @@ CRITICAL_SECTION _critical_section;
 #pragma code_seg(".pedll32")
 void __memcpy(char *dst, char *src, int size)
 {
+	int dw = size / 4;
+
+	if (dw > 0)
+	{
+		size -= dw * 4;
+		DWORD *dDST = (DWORD *) dst;
+		DWORD *dSRC = (DWORD *) src;
+				
+		while(dw-- > 0)
+			*dDST++ = *dSRC++;
+	}
+
 	while(size-- > 0)
 	{
 		*dst++=*src++;
@@ -88,26 +100,102 @@ void __memcpy(char *dst, char *src, int size)
 #pragma code_seg(".pedll32")
 int __memcmp(char *dst, char *src, int size)
 {
-	while(size-- > 0)
-	{
-		if (*dst != *src)
-			return -1;
+	if ((size % 4) == 0)
+	{	// optimized version ..
+		size /= 4;
+		DWORD *dDST = (DWORD *) dst;
+		DWORD *dSRC = (DWORD *) src;
 
-		dst++;
-		src++;
+		while(size-- > 0)
+		{
+			if (*dDST != *dSRC)
+				goto error;
+
+			dDST++; dSRC++;
+		}
+		
+		goto done;
+	}
+	else if ((size % 2) == 0)
+	{	// optimized version ..
+		size /= 4;
+		WORD *wDST = (WORD *) dst;
+		WORD *wSRC = (WORD *) src;
+
+		while(size-- > 0)
+		{
+			if (*wDST != *wSRC)
+				goto error;
+
+			wDST++;
+			wSRC++;
+		}
+		
+		goto done;
+	}
+	else
+	{
+		while(size-- > 0)
+		{
+			if (*dst != *src)
+				goto error;
+			dst++;
+			src++;
+		}
 	}
 
+	goto done;
+error:
+	return -1;
+done:
 	return 0;
 }
 
+#pragma code_seg(".pedll32")
+__declspec(naked)
+HMODULE WINAPI _dll32_LoadLibraryA(LPCTSTR lpFileName)
+{
+	__asm
+	{
+		mov esp, ebp
+		pop ebp
+		mov eax, dword ptr [g_hKernel32]
+		add eax, 11223340h
+		jmp dword ptr ds:[eax]
+		nop
+		nop
+		nop
+		nop
+		nop
+	}
+}
 
 #pragma code_seg(".pedll32")
+__declspec(naked)
+static LPVOID _CALC_OFFSET(LPVOID base, DWORD disp)
+{
+	__asm {
+		mov	eax, dword ptr [esp+4]
+		add eax, dword ptr [esp+8]
+		ret 8
+	}
+}
+
+#define CALC_OFFSET(TYPE, base, disp) (TYPE) _CALC_OFFSET((LPVOID) base, disp)
+
+#pragma code_seg(".pedll32")
+__declspec(naked)
 static void __forceinline swap(PBYTE a, PBYTE b)
 {
-	BYTE tmp = *a;
-
-	*a = *b;
-	*b = tmp;
+	__asm
+	{
+		mov al, byte ptr [esp+4]
+		mov ah, byte ptr [esp+8]
+		xchg al, ah
+		mov byte ptr [esp+4], al
+		mov byte ptr [esp+8], ah
+		ret 8
+	}
 }
 
 #pragma code_seg(".pedll32")
@@ -120,9 +208,7 @@ static void __forceinline init_sbox(LPBYTE RC4_SBOX)
 #pragma code_seg(".pedll32")
 static void __forceinline rc4_sbox_key(LPBYTE RC4_SBOX, PBYTE key, int length)
 {
-	int j = 0;
-
-	for(int i = 0; i < 256; i++)
+	for(int i = 0, j=0; i < 256; i++)
 	{
 		j = (j + RC4_SBOX[i] + key[i % length]) % 256;
 		swap(&RC4_SBOX[i], &RC4_SBOX[j]);
@@ -174,6 +260,8 @@ static BOOL reloc_is_text(PIMAGE_NT_HEADERS32 pImageNtHeader, PIMAGE_SECTION_HEA
 }
 
 #pragma code_seg(".pedll32")
+
+#pragma code_seg(".pedll32")
 static void reloctext(LPVOID pModule, PIMAGE_NT_HEADERS32 pImageNtHeader, PIMAGE_SECTION_HEADER pSectionPointer, LPVOID lpRelocAddress, DWORD dwRelocSize, LPVOID lpTextAddr)
 {
 	DWORD ImageBase = (DWORD) _baseAddress;
@@ -186,11 +274,7 @@ static void reloctext(LPVOID pModule, PIMAGE_NT_HEADERS32 pImageNtHeader, PIMAGE
 	// for each page!
 	while(relocation_page->BlockSize > 0)
 	{
-		if (relocation_page->PageRVA < pSectionPointer->VirtualAddress || relocation_page->PageRVA > (pSectionPointer->VirtualAddress + pSectionPointer->Misc.VirtualSize))
-		{	// skip current page!
-			relocation_page = CALC_OFFSET(base_relocation_block_t *, relocation_page, relocation_page->BlockSize);
-		}
-		else
+		if (relocation_page->PageRVA >= pSectionPointer->VirtualAddress && relocation_page->PageRVA < (pSectionPointer->VirtualAddress + pSectionPointer->Misc.VirtualSize))
 		{	// ok.. we can process this page!
 			typedef short relocation_entry;
 
@@ -239,8 +323,10 @@ static void reloctext(LPVOID pModule, PIMAGE_NT_HEADERS32 pImageNtHeader, PIMAGE
 				BlockSize -= 2;
 			}
 
-			relocation_page = CALC_OFFSET(base_relocation_block_t *, relocation_page, relocation_page->BlockSize);
 		}
+
+		// move cursor on next page
+		relocation_page = CALC_OFFSET(base_relocation_block_t *, relocation_page, relocation_page->BlockSize);
 	}
 
 }
@@ -491,12 +577,20 @@ static HMODULE get_Kernel32(void)
 }
 
 #pragma code_seg(".pedll32")
-BOOL WINAPI DllEntryPoint(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+static BOOL _DisableThreadLibraryCalls(HMODULE hKernel32, HMODULE hModule)
 {
 	char szDisableThreadLibraryCalls[] = { 'D', 'i', 's', 'a', 'b', 'l', 'e', 'T', 'h', 'r', 'e', 'a', 'd', 'L', 'i', 'b', 'r', 'a', 'r', 'y', 'C', 'a', 'l', 'l', 's', 00 };
-	char szGetModuleFileNameA[] = { 'G', 'e', 't', 'M', 'o', 'd', 'u', 'l', 'e', 'F', 'i', 'l', 'e', 'N', 'a', 'm', 'e', 'A', 0x00 };
 
 	typedef BOOL (WINAPI *DisableThreadLibraryCalls_ptr)(HMODULE hModule);
+	DisableThreadLibraryCalls_ptr f = (DisableThreadLibraryCalls_ptr) _dll32_GetProcAddress(hKernel32, szDisableThreadLibraryCalls);
+
+	return f(hModule);
+}
+
+#pragma code_seg(".pedll32")
+BOOL WINAPI DllEntryPoint(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+{
+	char szGetModuleFileNameA[] = { 'G', 'e', 't', 'M', 'o', 'd', 'u', 'l', 'e', 'F', 'i', 'l', 'e', 'N', 'a', 'm', 'e', 'A', 0x00 };
 
 	// find patterns!
 	PIMAGE_DOS_HEADER pDosHeader = (PIMAGE_DOS_HEADER) hinstDLL;
@@ -513,8 +607,7 @@ BOOL WINAPI DllEntryPoint(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserve
 			
 			_InitializeCriticalSection(h, &_critical_section);
 
-			DisableThreadLibraryCalls_ptr _DisableThreadLibraryCalls = (DisableThreadLibraryCalls_ptr) _dll32_GetProcAddress(h, szDisableThreadLibraryCalls);
-			_DisableThreadLibraryCalls(hinstDLL);
+			_DisableThreadLibraryCalls(h, hinstDLL);
 			//decrypt(hinstDLL, fdwReason, lpvReserved);
 			
 			return TRUE;
@@ -536,10 +629,28 @@ BOOL WINAPI DllEntryPoint(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserve
 }
 
 #pragma code_seg(".pedll32")
-extern "C" 
+extern "C"
+__declspec(naked) 
 LPVOID WINAPI DELAYDECRYPT(DWORD dwX)
 {
-	struct _vtbl vtable = { _VirtualProtect, _VirtualAlloc, _CreateFileA, _SetFilePointer };
+	struct _vtbl vtable;
+	LPVOID dwResult;
+
+	// prolog
+	__asm
+	{
+		push	ebp
+		mov		ebp, esp
+		sub		esp, 40h
+
+	}
+
+	vtable.mem_protect = _VirtualProtect;
+	vtable.mem_alloc = _VirtualAlloc;
+	vtable.file_open = _CreateFileA;
+	vtable.file_seek = _SetFilePointer;
+	
+	//{ , _VirtualAlloc, _CreateFileA, _SetFilePointer };
 
 	_EnterCriticalSection(get_Kernel32(), &_critical_section);
 
@@ -570,8 +681,214 @@ LPVOID WINAPI DELAYDECRYPT(DWORD dwX)
 
 	_LeaveCriticalSection(get_Kernel32(), &_critical_section);
 
-	return CALC_OFFSET(LPVOID, g_lpTextBaseAddr, dwX);
+	dwResult =  CALC_OFFSET(LPVOID, g_lpTextBaseAddr, dwX);
+	
+	// epilogue
+	// restore stack, remove from stack our ret. address and jmp into original function
+	__asm
+	{
+		mov eax, dwResult
+		mov	esp, ebp
+		pop	ebp
+		pop ecx
+		jmp eax
+	}
+	
 }
+
+#pragma code_seg(".pedll32")
+extern "C"
+__declspec(naked) VOID WINAPI _FakeEntryPoint0(VOID)
+{
+	__asm
+	{
+		push 0x10001000
+		call DELAYDECRYPT
+		//jmp	eax
+	}
+}
+
+#pragma code_seg(".pedll32")
+extern "C"
+__declspec(naked) VOID WINAPI _FakeEntryPoint1(VOID)
+{
+	__asm
+	{
+		push 0x10001000
+		call DELAYDECRYPT
+		//jmp	eax
+	}
+}
+
+#pragma code_seg(".pedll32")
+extern "C"
+__declspec(naked) VOID WINAPI _FakeEntryPoint2(VOID)
+{
+	__asm
+	{
+		push 0x10001000
+		call DELAYDECRYPT
+		//jmp	eax
+	}
+}
+
+#pragma code_seg(".pedll32")
+extern "C"
+__declspec(naked) VOID WINAPI _FakeEntryPoint3(VOID)
+{
+	__asm
+	{
+		push 0x10001000
+		call DELAYDECRYPT
+		//jmp	eax
+	}
+}
+
+#pragma code_seg(".pedll32")
+extern "C"
+__declspec(naked) VOID WINAPI _FakeEntryPoint4(VOID)
+{
+	__asm
+	{
+		push 0x10001000
+		call DELAYDECRYPT
+		//jmp	eax
+	}
+}
+
+#pragma code_seg(".pedll32")
+extern "C"
+__declspec(naked) VOID WINAPI _FakeEntryPoint5(VOID)
+{
+	__asm
+	{
+		push 0x10001000
+		call DELAYDECRYPT
+		//jmp	eax
+	}
+}
+
+#pragma code_seg(".pedll32")
+extern "C"
+__declspec(naked) VOID WINAPI _FakeEntryPoint6(VOID)
+{
+	__asm
+	{
+		push 0x10001000
+		call DELAYDECRYPT
+		//jmp	eax
+	}
+}
+
+#pragma code_seg(".pedll32")
+extern "C"
+__declspec(naked) VOID WINAPI _FakeEntryPoint7(VOID)
+{
+	__asm
+	{
+		push 0x10001000
+		call DELAYDECRYPT
+		//jmp	eax
+	}
+}
+
+#pragma code_seg(".pedll32")
+extern "C"
+__declspec(naked) VOID WINAPI _FakeEntryPoint8(VOID)
+{
+	__asm
+	{
+		push 0x10001000
+		call DELAYDECRYPT
+		//jmp	eax
+	}
+}
+
+#pragma code_seg(".pedll32")
+extern "C"
+__declspec(naked) VOID WINAPI _FakeEntryPoint9(VOID)
+{
+	__asm
+	{
+		push 0x10001000
+		call DELAYDECRYPT
+		//jmp	eax
+	}
+}
+
+#pragma code_seg(".pedll32")
+extern "C"
+__declspec(naked) VOID WINAPI _FakeEntryPointA(VOID)
+{
+	__asm
+	{
+		push 0x10001000
+		call DELAYDECRYPT
+		//jmp	eax
+	}
+}
+
+#pragma code_seg(".pedll32")
+extern "C"
+__declspec(naked) VOID WINAPI _FakeEntryPointB(VOID)
+{
+	__asm
+	{
+		push 0x10001000
+		call DELAYDECRYPT
+		//jmp	eax
+	}
+}
+
+#pragma code_seg(".pedll32")
+extern "C"
+__declspec(naked) VOID WINAPI _FakeEntryPointC(VOID)
+{
+	__asm
+	{
+		push 0x10001000
+		call DELAYDECRYPT
+		//jmp	eax
+	}
+}
+
+#pragma code_seg(".pedll32")
+extern "C"
+__declspec(naked) VOID WINAPI _FakeEntryPointD(VOID)
+{
+	__asm
+	{
+		push 0x10001000
+		call DELAYDECRYPT
+		//jmp	eax
+	}
+}
+
+#pragma code_seg(".pedll32")
+extern "C"
+__declspec(naked) VOID WINAPI _FakeEntryPointE(VOID)
+{
+	__asm
+	{
+		push 0x10001000
+		call DELAYDECRYPT
+		//jmp	eax
+	}
+}
+
+#pragma code_seg(".pedll32")
+extern "C"
+__declspec(naked) VOID WINAPI _FakeEntryPointF(VOID)
+{
+	__asm
+	{
+		push 0x10001000
+		call DELAYDECRYPT
+		//jmp	eax
+	}
+}
+
+
 
 #pragma code_seg(".pedll32")
 extern "C"
@@ -581,5 +898,6 @@ void WINAPI DELAYENCRYPT()
 	g_decrypted = 2;
 	decrypt(&vtable, g_hKernel32, DLL_PROCESS_ATTACH, NULL);
 }
+
 
 #endif

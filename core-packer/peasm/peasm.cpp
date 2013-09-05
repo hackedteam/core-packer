@@ -1,4 +1,5 @@
 #include <Windows.h>
+#include <delayimp.h>
 #include <iostream>
 #include "types.h"
 #include "peasm.h"
@@ -325,7 +326,7 @@ bool CPeAssembly::Save(char *pFileName)
 ***************************************************************************/
 virtualaddress_t CPeAssembly::getBaseAddress()
 {
-	return NULL;
+	return _lpNtHeader->OptionalHeader.ImageBase;
 }
 
 /**
@@ -588,7 +589,7 @@ PIMAGE_SECTION_HEADER CPeAssembly::GetSectionHeader(int index)
  *	\!LookupSectionByName
  *	looking section by name
  **/
-CPeSection *CPeAssembly::LookupSectionByName(char *szSectionName)
+CPeSection *CPeAssembly::LookupSectionByName(const char *szSectionName)
 {
 	for(SECTION_ITERATOR it = _sections.begin(); it != _sections.end(); it++)
 	{
@@ -651,7 +652,7 @@ bool CPeAssembly::RemoveSection(int index)
 	return true;
 }
 
-bool CPeAssembly::RemoveSection(char *szSectionName)
+bool CPeAssembly::RemoveSection(const char *szSectionName)
 {	// lookup section by name!
 	PIMAGE_SECTION_HEADER cursor = GetSectionHeader(0);
 	PIMAGE_SECTION_HEADER last = LastSectionHeader();
@@ -705,7 +706,106 @@ virtualaddress_t CPeAssembly::nextrawdata()
 	return va;
 }
 
-CPeSection*	CPeAssembly::AddSection(char *szSectionName, virtualaddress_t newva, size_t size)
+/**
+ *	\!AddSection
+ *	create a new section with "rawsize" value
+ **/
+CPeSection*	CPeAssembly::AddSection(const char *szSectionName, virtualaddress_t newva, size_t size, size_t rawsize)
+{
+	// update header!!!
+	IMAGE_SECTION_HEADER dummy;
+	memset(&dummy, 0, sizeof(IMAGE_SECTION_HEADER));
+
+	size_t len = strlen(szSectionName);
+	if (len > 8) len = 8;
+	memcpy(dummy.Name, szSectionName, len);
+
+	if (newva == 0)	// add section in tail!
+	{
+		newva = nextva();
+		dummy.PointerToRawData = nextrawdata();
+	}
+
+	dummy.VirtualAddress = newva;
+	dummy.Misc.VirtualSize = size; //round_section(size);
+	rawsize = round_file(rawsize);
+	dummy.SizeOfRawData = rawsize;
+
+	void *tmp = malloc(rawsize);
+	memset(tmp, 0, rawsize);
+
+	// before write section in list.. update next!
+	_sections.sort();
+
+	std::list<SECTION_ITEM>::iterator it = _sections.begin();
+
+	virtualaddress_t sum = round_section(size);
+	bool bFound = false;
+
+	lock_datadir();
+
+	virtualaddress_t _reloc_from = 0x0;
+	virtualaddress_t _reloc_to = 0x0;
+
+	for(it = _sections.begin(); it != _sections.end(); ++it)
+	{
+		virtualaddress_t va = it->va;
+		size_t size = it->descriptor->VirtualSize();
+
+		if (va >= newva || bFound == true)
+		{	// first section to move!!
+			
+			if (dummy.PointerToRawData == 0)
+			{	// get first pointer to raw data
+				dummy.PointerToRawData = it->descriptor->PointerToRawData();
+			}
+			
+			//virtualaddress_t old = it->va;
+			size_t size = it->descriptor->VirtualSize();
+
+			it->va += sum;
+			it->descriptor->SetNewVirtualAddress(it->va);
+
+			update_header(it->va, va, size);	// reflect in header!
+
+			update_datadirectory(it->va, va, size);	// reflect in datadirectory
+
+			if (it->descriptor->SizeOfRawData() != 0)
+			{	// adjust pointer to raw data!
+				virtualaddress_t p = it->descriptor->PointerToRawData();
+				p += dummy.SizeOfRawData;
+				it->descriptor->SetPointerToRawData(p);
+			}
+
+			if (bFound == false)
+			{	// only 1st time!
+				_reloc_from = va;
+				_reloc_to = it->va;
+			}
+
+			bFound = true;
+		}
+	}
+
+	if (_reloc_from != 0)
+		update_relocentries(_reloc_to, _reloc_from, 0);
+
+	/* TODO */
+	void *region = malloc(round_section(size));
+	memset(region, 0, round_section(size));
+	CPeSection *n = new CPeSection(this, &dummy, newva, size, region );
+	free(region);
+
+	SECTION_ITEM dummy1 = { newva , n };
+
+	_sections.push_back(dummy1);	// put in list
+	_sections.sort();	// re-sort!
+	
+	
+	return n;
+}
+
+CPeSection*	CPeAssembly::AddSection(const char *szSectionName, virtualaddress_t newva, size_t size)
 {
 	// update header!!!
 	IMAGE_SECTION_HEADER dummy;
@@ -800,12 +900,37 @@ CPeSection*	CPeAssembly::AddSection(char *szSectionName, virtualaddress_t newva,
 //	first section is replaced with new "big" section
 CPeSection* CPeAssembly::MergeSection(CPeSection *sect0, CPeSection *sect1)
 {
-	void *data = malloc(sect0->VirtualSize() + sect1->VirtualSize());
+	IMAGE_SECTION_HEADER dummy;
+	memset(&dummy, 0, sizeof(IMAGE_SECTION_HEADER));
+
+	size_t size_first_section = sect1->VirtualAddress() - sect0->VirtualAddress();
+	
+	size_t virtualsize = size_first_section + sect1->VirtualSize();
+	
+	dummy.Misc.VirtualSize = virtualsize;
+	dummy.Characteristics = sect0->GetSectionHeader()->Characteristics;
+	dummy.PointerToRawData = sect0->GetSectionHeader()->PointerToRawData;
+
+	/**
+	 SizeOfRawData of first section ignored... sect0->GetSectionHeader()->SizeOfRawData
+	 new size of first section is same of "Virtual Size" */
+	dummy.SizeOfRawData = size_first_section + sect1->GetSectionHeader()->SizeOfRawData;
+
+	void *data = malloc(virtualsize);
+	
+	memcpy(dummy.Name, sect1->GetSectionHeader()->Name, 8);
+
+	dummy.VirtualAddress = sect0->VirtualAddress();
+	
+	//dummy.SizeOfRawData = sect0->SizeOfRawData() + sect1->SizeOfRawData();
+
+	memset(data, 0xcc, virtualsize);	// fill section with xcc or xdd
 
 	memcpy(data, sect0->RawData(), sect0->VirtualSize());
-	memcpy(CALC_OFFSET(void *, data, sect0->VirtualSize()), sect1->RawData(), sect1->VirtualSize());
+	memcpy(CALC_OFFSET(void *, data, sect1->VirtualAddress() - sect0->VirtualAddress()), sect1->RawData(), sect1->VirtualSize());
+	
+	CPeSection *newsection = new CPeSection(this, &dummy, sect0->VirtualAddress(), virtualsize, data);
 
-	CPeSection *newsection = new CPeSection(this, sect0->GetSectionHeader(), sect0->VirtualAddress(), sect0->VirtualSize() + sect1->VirtualSize(), data);
 
 	SECTION_ITEM d0 = { sect0->VirtualAddress(), NULL };
 	SECTION_ITEM d1 = { sect1->VirtualAddress(), NULL };
@@ -813,17 +938,41 @@ CPeSection* CPeAssembly::MergeSection(CPeSection *sect0, CPeSection *sect1)
 	_sections.remove(d0);
 	_sections.remove(d1);
 
-	d0.va = newsection->VirtualAddress();
-	d0.descriptor = newsection;
+	// update header!!!
+	//PIMAGE_SECTION_HEADER pSection0 = sect0->GetSectionHeader();
 
-	_sections.push_back(d0);
+	SECTION_ITEM d2 = { newsection->VirtualAddress(), newsection };
+
+	_sections.push_back(d2);
 
 	_sections.sort();
 	
 	free(data);
 
+	DWORD sect0_RawData= sect0->SizeOfRawData();
+	DWORD sect1_RawData = sect1->SizeOfRawData();
+	DWORD sect0_PtrRawData = sect0->PointerToRawData();
+	DWORD sect1_PtrRawData = sect0->PointerToRawData();
+
 	delete sect0;	// remove section 0
 	delete sect1;	// remove section 1
+
+	DWORD sectN_PtrRawData = newsection->PointerToRawData();
+	DWORD sectN_RawData = newsection->SizeOfRawData();
+
+	for(SECTION_ITERATOR it = _sections.begin(); it != _sections.end(); ++it)
+	{
+		if (it->descriptor->PointerToRawData() > newsection->PointerToRawData())
+		{
+			DWORD delta = sectN_RawData - sect1_RawData - sect0_RawData;
+			DWORD newptr = it->descriptor->PointerToRawData() + delta;
+
+			it->descriptor->SetPointerToRawData(newptr);
+		}
+
+	}
+
+
 	return newsection;
 }
 
@@ -923,15 +1072,23 @@ void CPeAssembly::update_datadirectory(virtualaddress_t newbaseaddress, virtuala
 	}
 }
 
+#define UPDATE_SYMBOLADDRESS(x, base, newbase) if (x != 0) x = x - base + newbase
 
 void CPeAssembly::update_delayimportentries(virtualaddress_t newbaseaddress, virtualaddress_t baseaddress, size_t size)
 {	// process import entries!
-	PIMAGE_IMPORT_DESCRIPTOR iat = 
-		(PIMAGE_IMPORT_DESCRIPTOR) this->RawPointer(_lpNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress);
+	PImgDelayDescr pDelayDescr = 
+		(PImgDelayDescr) this->RawPointer(_lpNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT].VirtualAddress);
 
-	while(iat->Characteristics != 0)
+	while(pDelayDescr->grAttrs != 0)
 	{
-		iat->Name -= baseaddress;
+		UPDATE_SYMBOLADDRESS(pDelayDescr->rvaBoundIAT, baseaddress, newbaseaddress);
+		UPDATE_SYMBOLADDRESS(pDelayDescr->rvaDLLName, baseaddress, newbaseaddress);
+		UPDATE_SYMBOLADDRESS(pDelayDescr->rvaHmod, baseaddress, newbaseaddress);
+		UPDATE_SYMBOLADDRESS(pDelayDescr->rvaIAT, baseaddress, newbaseaddress);
+		UPDATE_SYMBOLADDRESS(pDelayDescr->rvaINT, baseaddress, newbaseaddress);
+		UPDATE_SYMBOLADDRESS(pDelayDescr->rvaUnloadIAT, baseaddress, newbaseaddress);
+
+		/*iat->Name -= baseaddress;
 		iat->Name += newbaseaddress;
 
 		iat->Characteristics -= baseaddress;
@@ -956,8 +1113,8 @@ void CPeAssembly::update_delayimportentries(virtualaddress_t newbaseaddress, vir
 			rvaName++;
 			iatRVA++;
 		}
-
-		iat++;
+		*/
+		pDelayDescr++;
 	}
 
 }
@@ -1042,13 +1199,13 @@ void CPeAssembly::update_relocentries(virtualaddress_t newimagebase, virtualaddr
 {
 	// image base!
 	uint32_t ImageBase = _lpNtHeader->OptionalHeader.ImageBase;
-	void *lpRelocAddress = RawPointer(_lpNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress);
+	void *lpRelocPointer = RawPointer(_lpNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress);
 	size_t dwRelocSize = _lpNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size;
 
-	if (dwRelocSize == 0 || lpRelocAddress == NULL)
+	if (dwRelocSize == 0 || lpRelocPointer == NULL)
 		return;	// no reloc table here!
 
-	base_relocation_block_t *relocation_page = (base_relocation_block_t *) lpRelocAddress;
+	base_relocation_block_t *relocation_page = (base_relocation_block_t *) lpRelocPointer;
 
 	// for each page!
 	while(relocation_page->BlockSize > 0)
@@ -1084,6 +1241,8 @@ void CPeAssembly::update_relocentries(virtualaddress_t newimagebase, virtualaddr
 			entries++;
 			BlockSize -= 2;
 		}
+
+		relocation_page = CALC_OFFSET(relocation_block_t *, relocation_page, relocation_page->BlockSize);
 	}
 
 }

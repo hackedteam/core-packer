@@ -103,6 +103,9 @@ DWORD NextVirtualAddress64(PIMAGE_NT_HEADERS64 pHeader)
 // find a block of memory to patch!
 LPVOID FindBlockMem(LPBYTE lpInitialMem, DWORD dwSize, LPVOID lpSignature, DWORD dwSignatureSize)
 {
+	if (lpSignature == NULL)
+		return NULL;
+
 	while(dwSize >= dwSignatureSize)
 	{
 		if (memcmp(lpInitialMem, lpSignature, dwSignatureSize) == 0)
@@ -174,6 +177,9 @@ void Patch_Entry(LPVOID lpBaseBlock, LPBYTE lpInitialMem, DWORD dwSize, LPVOID l
 
 void Patch_MARKER(LPVOID lpBaseBlock, LPBYTE lpInitialMem, DWORD dwSize, LPVOID lpSignature, DWORD dwSignatureSize, DWORD dwOldOffset)
 {
+	if (lpSignature == NULL)
+		return;
+
 	LPVOID lpInitialByte = FindBlockMem((LPBYTE) lpInitialMem, dwSize, lpSignature, dwSignatureSize);
 
 	if (lpInitialByte != NULL)

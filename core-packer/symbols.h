@@ -23,9 +23,10 @@ typedef HANDLE (WINAPI *CreateFileA_ptr)(LPCTSTR lpFileName, DWORD dwDesiredAcce
 typedef DWORD (WINAPI *SetFilePointer_ptr)(HANDLE hFile, LONG lDistanceToMove, PLONG lpDistanceToMoveHigh, DWORD dwMoveMethod);
 
 #ifdef _BUILD32
+HMODULE WINAPI _dll32_LoadLibraryA(LPCTSTR lpFileName);	// C porting
+
 extern "C" 
 {
-HMODULE WINAPI _dll32_LoadLibraryA(LPCTSTR lpFileName);
 HMODULE WINAPI _exe_LoadLibraryA(LPCTSTR lpFileName);
 
 FARPROC WINAPI _dll32_GetProcAddress(HMODULE hModule, LPCSTR lpProcName);
@@ -49,7 +50,7 @@ BOOL WINAPI _exe_CloseHandle(HANDLE hObject);
 BOOL WINAPI _EntryPoint(LPVOID lpBase, HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
 BOOL WINAPI _exe_EntryPoint(LPVOID lpBase, HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
 
-VOID WINAPI _CrtStartup(LPVOID lpBase);	// NO EXIT!
+int WINAPI _CrtStartup(LPVOID lpBase);	// NO EXIT!
 LPVOID WINAPI _GETBASE();
 }
 
