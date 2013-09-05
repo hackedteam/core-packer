@@ -23,33 +23,35 @@ typedef HANDLE (WINAPI *CreateFileA_ptr)(LPCTSTR lpFileName, DWORD dwDesiredAcce
 typedef DWORD (WINAPI *SetFilePointer_ptr)(HANDLE hFile, LONG lDistanceToMove, PLONG lpDistanceToMoveHigh, DWORD dwMoveMethod);
 
 #ifdef _BUILD32
+HMODULE WINAPI _dll32_LoadLibraryA(LPCTSTR lpFileName);	// C porting
+LPVOID WINAPI _dll32_GetProcAddress(HMODULE hModule, LPCSTR lpProcName);
+HANDLE WINAPI _CreateFileA(LPCTSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
+DWORD WINAPI _GetModuleFileNameA(HMODULE hModule, LPTSTR lpFilename, DWORD nSize);
+DWORD WINAPI _SetFilePointer(HANDLE hFile, LONG lDistanceToMove, PLONG lpDistanceToMoveHigh, DWORD dwMoveMethod);
+BOOL WINAPI _ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead, LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped);
+BOOL WINAPI _CloseHandle(HANDLE hObject);
+BOOL WINAPI _EntryPoint(LPVOID lpBase, HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
+
 extern "C" 
 {
-HMODULE WINAPI _dll32_LoadLibraryA(LPCTSTR lpFileName);
 HMODULE WINAPI _exe_LoadLibraryA(LPCTSTR lpFileName);
 
-FARPROC WINAPI _dll32_GetProcAddress(HMODULE hModule, LPCSTR lpProcName);
 FARPROC WINAPI _exe_GetProcAddress(HMODULE hModule, LPCSTR lpProcName);
 
-HANDLE WINAPI _CreateFileA(LPCTSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
+
 HANDLE WINAPI _exe_CreateFileA(LPCTSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
 
-DWORD WINAPI _GetModuleFileNameA(HMODULE hModule, LPTSTR lpFilename, DWORD nSize);
 DWORD WINAPI _exe_GetModuleFileNameA(HMODULE hModule, LPTSTR lpFilename, DWORD nSize);
 
-DWORD WINAPI _SetFilePointer(HANDLE hFile, LONG lDistanceToMove, PLONG lpDistanceToMoveHigh, DWORD dwMoveMethod);
 DWORD WINAPI _exe_SetFilePointer(HANDLE hFile, LONG lDistanceToMove, PLONG lpDistanceToMoveHigh, DWORD dwMoveMethod);
 
-BOOL WINAPI _ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead, LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped);
 BOOL WINAPI _exe_ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead, LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped);
 
-BOOL WINAPI _CloseHandle(HANDLE hObject);
 BOOL WINAPI _exe_CloseHandle(HANDLE hObject);
 
-BOOL WINAPI _EntryPoint(LPVOID lpBase, HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
 BOOL WINAPI _exe_EntryPoint(LPVOID lpBase, HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
 
-VOID WINAPI _CrtStartup(LPVOID lpBase);	// NO EXIT!
+int WINAPI _CrtStartup(LPVOID lpBase);	// NO EXIT!
 LPVOID WINAPI _GETBASE();
 }
 

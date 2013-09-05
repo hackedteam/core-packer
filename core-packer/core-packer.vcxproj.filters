@@ -28,6 +28,12 @@
     <Filter Include="Source Files\stub">
       <UniqueIdentifier>{1673165e-ff14-4ff2-81cc-4a01c1c3647f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\distorm">
+      <UniqueIdentifier>{672bb42d-1835-4cda-9705-6141fb92aa64}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\distorm">
+      <UniqueIdentifier>{47336c1b-014c-42fd-b1a8-f527cee74b87}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tclap\Arg.h">
@@ -147,6 +153,39 @@
     <ClInclude Include="peasm\types.h">
       <Filter>Header Files\peasm</Filter>
     </ClInclude>
+    <ClInclude Include="distorm\config.h">
+      <Filter>Header Files\distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="distorm\decoder.h">
+      <Filter>Header Files\distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="distorm\instructions.h">
+      <Filter>Header Files\distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="distorm\insts.h">
+      <Filter>Header Files\distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="distorm\operands.h">
+      <Filter>Header Files\distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="distorm\prefix.h">
+      <Filter>Header Files\distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="distorm\textdefs.h">
+      <Filter>Header Files\distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="distorm\wstring.h">
+      <Filter>Header Files\distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="distorm\x86defs.h">
+      <Filter>Header Files\distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="distorm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mnemonics.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="library.cpp">
@@ -205,6 +244,39 @@
     </ClCompile>
     <ClCompile Include="peasm\pe_amd64.cpp">
       <Filter>Source Files\peasm</Filter>
+    </ClCompile>
+    <ClCompile Include="unpack32.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="distorm\decoder.c">
+      <Filter>Source Files\distorm</Filter>
+    </ClCompile>
+    <ClCompile Include="distorm\distorm.c">
+      <Filter>Source Files\distorm</Filter>
+    </ClCompile>
+    <ClCompile Include="distorm\instructions.c">
+      <Filter>Source Files\distorm</Filter>
+    </ClCompile>
+    <ClCompile Include="distorm\insts.c">
+      <Filter>Source Files\distorm</Filter>
+    </ClCompile>
+    <ClCompile Include="distorm\mnemonics.c">
+      <Filter>Source Files\distorm</Filter>
+    </ClCompile>
+    <ClCompile Include="distorm\operands.c">
+      <Filter>Source Files\distorm</Filter>
+    </ClCompile>
+    <ClCompile Include="distorm\prefix.c">
+      <Filter>Source Files\distorm</Filter>
+    </ClCompile>
+    <ClCompile Include="distorm\textdefs.c">
+      <Filter>Source Files\distorm</Filter>
+    </ClCompile>
+    <ClCompile Include="distorm\wstring.c">
+      <Filter>Source Files\distorm</Filter>
+    </ClCompile>
+    <ClCompile Include="deprecated.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

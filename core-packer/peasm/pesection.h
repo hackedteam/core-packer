@@ -41,6 +41,8 @@ public:
 	inline PIMAGE_SECTION_HEADER	GetSectionHeader() { return &_header; };
 
 	void	AddSize(size_t size);
+	inline bool	hide(bool value) { this->_hidesection = value; return this->_hidesection; };
+	inline bool	hide() { return this->_hidesection; };
 
 protected:
 	inline bool	isInSection(virtualaddress_t va)
@@ -55,6 +57,7 @@ private:
 	virtualaddress_t	_base;
 	virtualaddress_t	_size;
 
+	bool	_hidesection;
 	void* _rawData;
 };
 

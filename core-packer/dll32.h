@@ -13,7 +13,7 @@ extern "C" HMODULE g_hKernel32;
 extern VirtualProtect_ptr _VirtualProtect;
 extern VirtualAlloc_ptr	_VirtualAlloc;
 
-extern "C" BOOL WINAPI _EntryPoint(LPVOID, HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
+//extern "C" BOOL WINAPI _EntryPoint(LPVOID, HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
 extern "C" HMODULE g_hKernel32;
 extern "C" BYTE	g_decrypted;
 extern "C" LPVOID g_lpTextBaseAddr;
@@ -31,5 +31,8 @@ extern "C" VOID WINAPI _FakeEntryPoint9();
 extern "C" VOID WINAPI _FakeEntryPointA();
 extern "C" VOID WINAPI _FakeEntryPointB();
 extern "C" VOID WINAPI _FakeEntryPointC();
+extern "C" VOID WINAPI _FakeEntryPointD();
+extern "C" VOID WINAPI _FakeEntryPointE();
+extern "C" VOID WINAPI _FakeEntryPointF();
 
 #endif
