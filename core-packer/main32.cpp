@@ -238,7 +238,7 @@ void fix_iat_symbol(LPVOID hProcessModule, PIMAGE_NT_HEADERS32 pSelf, PIMAGE_SEC
  **/
 void Patch_EXPORT_SYMBOL(LPVOID lpBaseBlock, LPBYTE lpInitialMem, DWORD dwSize, LPVOID lpSignature, DWORD newOffset, DWORD oldOffset)
 {
-	LPVOID lpInitialByte = FindBlockMem((LPBYTE) lpInitialMem, dwSize, lpSignature, 0x12);
+	LPVOID lpInitialByte = FindBlockMem((LPBYTE) lpInitialMem, dwSize, lpSignature, 0x10);
 
 	if (lpInitialByte != NULL)
 	{

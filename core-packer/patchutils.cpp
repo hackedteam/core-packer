@@ -5,6 +5,11 @@
 #include "rc4.h"
 #include "symbols.h"
 
+/**
+ *	NextPointerToRawData
+ *		in:		PIMAGE_NT_HEADERS (32 bit)
+ *		out:	([LAST SECTION ON IMAGE].PointerToRawData + SizeOfRawData)
+ **/
 DWORD NextPointerToRawData(PIMAGE_NT_HEADERS pHeader)
 {
 	DWORD dwPointerToRawData = 0;
@@ -29,6 +34,11 @@ DWORD NextPointerToRawData(PIMAGE_NT_HEADERS pHeader)
 	return dwPointerToRawData;
 }
 
+/**
+ *	NextPointerToRawData
+ *		in:		PIMAGE_NT_HEADERS (64 bit)
+ *		out:	([LAST SECTION ON IMAGE].PointerToRawData + SizeOfRawData)
+ **/
 DWORD NextPointerToRawData64(PIMAGE_NT_HEADERS64 pHeader)
 {
 	DWORD dwPointerToRawData = 0;
@@ -53,6 +63,11 @@ DWORD NextPointerToRawData64(PIMAGE_NT_HEADERS64 pHeader)
 	return dwPointerToRawData;
 }
 
+/**
+ *	NextVirtualAddress
+ *		in:		PIMAGE_NT_HEADERS (32 bit)
+ *		out:	([LAST SECTION ON IMAGE].VirtualAddress + VirtualSize)
+ **/
 DWORD NextVirtualAddress(PIMAGE_NT_HEADERS pHeader)
 {
 	DWORD dwNextVirtualAddress = 0;
@@ -77,6 +92,11 @@ DWORD NextVirtualAddress(PIMAGE_NT_HEADERS pHeader)
 	return dwNextVirtualAddress;
 }
 
+/**
+ *	NextVirtualAddress
+ *		in:		PIMAGE_NT_HEADERS (64 bit)
+ *		out:	([LAST SECTION ON IMAGE].VirtualAddress + VirtualSize)
+ **/
 DWORD NextVirtualAddress64(PIMAGE_NT_HEADERS64 pHeader)
 {
 	DWORD dwNextVirtualAddress = 0;
@@ -202,9 +222,19 @@ void Patch_MARKER(LPVOID lpBaseBlock, LPBYTE lpInitialMem, DWORD dwSize, LPVOID 
 		{
 			Patch_MOV((LPBYTE) lpInitialByte, dwOldOffset);
 		}
-		else if (*c = 0x55)
+		else if (*c == 0x55)
 		{	// push ebp ... 
 			LPDWORD sum = CALC_OFFSET(LPDWORD, c, 0x0c);
+			*sum = dwOldOffset;
+		}
+		else if (*c == 0x8b && c[1] == 0xe5)
+		{
+			LPDWORD sum = CALC_OFFSET(LPDWORD, c, 0x09);
+			*sum = dwOldOffset;
+		}
+		else if (*c == 0x90 && c[1] == 0x90)
+		{
+			LPDWORD sum = CALC_OFFSET(LPDWORD, c, 0x09);
 			*sum = dwOldOffset;
 		}
 	}

@@ -212,7 +212,6 @@
     <ClCompile Include="distorm\prefix.c" />
     <ClCompile Include="distorm\textdefs.c" />
     <ClCompile Include="distorm\wstring.c" />
-    <ClCompile Include="DllEntryPoint.cpp" />
     <ClCompile Include="DllEntryPoint32.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>

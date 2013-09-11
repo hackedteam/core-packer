@@ -7,14 +7,14 @@ extern ULONG64		_rc4key0;
 extern ULONG64		_rc4key1;
 extern ULONG64		_baseAddress;
 
-extern "C" HMODULE g_hKernel32;
+//extern "C" g_hKernel32;
 
 //extern "C" VirtualAlloc_ptr	_VirtualAlloc;
 extern VirtualProtect_ptr _VirtualProtect;
 extern VirtualAlloc_ptr	_VirtualAlloc;
 
 //extern "C" BOOL WINAPI _EntryPoint(LPVOID, HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
-extern "C" HMODULE g_hKernel32;
+//extern "C" HMODULE g_hKernel32;
 extern "C" BYTE	g_decrypted;
 extern "C" LPVOID g_lpTextBaseAddr;
 

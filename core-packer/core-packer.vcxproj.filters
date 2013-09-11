@@ -34,6 +34,9 @@
     <Filter Include="Header Files\distorm">
       <UniqueIdentifier>{47336c1b-014c-42fd-b1a8-f527cee74b87}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\stub">
+      <UniqueIdentifier>{57260724-2794-4e2f-9781-d81788c16fd5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tclap\Arg.h">
@@ -228,9 +231,6 @@
       <Filter>Source Files\peasm</Filter>
     </ClCompile>
     <ClCompile Include="ExeEntryPoint32.cpp">
-      <Filter>Source Files\stub</Filter>
-    </ClCompile>
-    <ClCompile Include="DllEntryPoint.cpp">
       <Filter>Source Files\stub</Filter>
     </ClCompile>
     <ClCompile Include="DllEntryPoint32.cpp">

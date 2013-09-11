@@ -64,6 +64,9 @@ VirtualProtect_ptr	_VirtualProtect;
 __declspec(allocate(".pedll32"))
 VirtualAlloc_ptr	_VirtualAlloc;
 
+__declspec(allocate(".pedll32"))
+HMODULE g_hKernel32;
+
 extern "C" {
 
 __declspec(allocate(".pedll32"))
@@ -189,8 +192,10 @@ HMODULE WINAPI _dll32_LoadLibraryA(LPCTSTR lpFileName)
 {
 	__asm
 	{
-		mov esp, ebp
-		pop ebp
+		nop
+		nop
+		nop
+
 		mov eax, dword ptr [g_hKernel32]
 		add eax, 11223340h
 		jmp dword ptr ds:[eax]
@@ -207,8 +212,9 @@ __declspec(naked)
 LPVOID WINAPI _dll32_GetProcAddress(HMODULE hModule, LPCSTR lpProcName)
 {
 	__asm {
-		mov esp, ebp
-		pop ebp
+		nop
+		nop
+		nop
 		mov eax, dword ptr [g_hKernel32]
 		add eax, 11223341h
 		jmp dword ptr [eax]
@@ -225,8 +231,10 @@ __declspec(naked)
 DWORD WINAPI _SetFilePointer(HANDLE hFile, LONG lDistanceToMove, PLONG lpDistanceToMoveHigh, DWORD dwMoveMethod)
 {
 	__asm {
-		mov esp, ebp
-		pop	ebp
+		nop
+		nop
+		nop
+
 		mov eax, dword ptr [g_hKernel32]
 		add eax, 11223342h
 		jmp dword ptr [eax]
@@ -243,8 +251,10 @@ __declspec(naked)
 BOOL WINAPI _CloseHandle(HANDLE hObject)
 {
 	__asm {
-		mov esp, ebp
-		pop	ebp
+		nop
+		nop
+		nop
+
 		mov eax, dword ptr [g_hKernel32]
 		add eax, 11223343h
 		jmp dword ptr [eax]
@@ -261,8 +271,10 @@ __declspec(naked)
 BOOL WINAPI _ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesRead, LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped)
 {
 	__asm {
-		mov esp, ebp
-		pop	ebp
+		nop
+		nop
+		nop
+
 		mov eax, dword ptr [g_hKernel32]
 		add eax, 11223344h
 		jmp dword ptr [eax]
@@ -279,8 +291,10 @@ __declspec(naked)
 DWORD WINAPI _GetModuleFileNameA(HMODULE hModule, LPTSTR lpFileName, DWORD nSize)
 {
 	__asm {
-		mov esp, ebp
-		pop	ebp
+		nop
+		nop
+		nop
+
 		mov eax, dword ptr [g_hKernel32]
 		add eax, 11223345h
 		jmp dword ptr [eax]
@@ -297,8 +311,10 @@ __declspec(naked)
 HANDLE WINAPI _CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttribytes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
 	_asm {
-		mov esp, ebp
-		pop	ebp
+		nop
+		nop
+		nop
+
 		mov eax, dword ptr [g_hKernel32]
 		add eax, 11223346h
 		jmp dword ptr [eax]
@@ -315,20 +331,24 @@ __declspec(naked)
 BOOL WINAPI _EntryPoint(LPVOID lpBase, HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
 	__asm {
+		push ebp
+		mov ebp, esp
 		push dword ptr [ebp+14h]
 		push dword ptr [ebp+10h]
 		push dword ptr [ebp+0ch]
 		mov eax, dword ptr [ebp+08h]
 		add eax, 10101010h
 		call eax
-		ret
+		mov esp, ebp
+		pop ebp
+		ret 0x10
 	}
 }
 
 
 #pragma code_seg(".pedll32")
 __declspec(naked)
-static LPVOID _CALC_OFFSET(LPVOID base, DWORD disp)
+static LPVOID WINAPI _CALC_OFFSET(LPVOID base, DWORD disp)
 {
 	__asm {
 		lea eax, dword ptr [esp+4]
@@ -406,17 +426,11 @@ static void __forceinline cypher_msg(LPBYTE RC4_SBOX, PBYTE msg, int length)
 #pragma code_seg(".pedll32")
 static BOOL reloc_is_text(PIMAGE_NT_HEADERS32 pImageNtHeader, PIMAGE_SECTION_HEADER pSectionText, DWORD offset)
 {
-	DWORD ImageBase = (DWORD) _baseAddress;
+	//DWORD ImageBase = (DWORD) _baseAddress;
 
-	DWORD minVirtualAddress = pSectionText->VirtualAddress;
-	DWORD maxVirtualAddress = pSectionText->VirtualAddress + pSectionText->Misc.VirtualSize;
-
-	offset -= ImageBase;
+	offset -= (DWORD) _baseAddress;
 	
-	if (minVirtualAddress <= offset && offset < maxVirtualAddress)
-		return TRUE;
-
-	return FALSE;
+	return (pSectionText->VirtualAddress <= offset && offset < (pSectionText->VirtualAddress + pSectionText->Misc.VirtualSize)) ?  TRUE : FALSE;
 }
 
 #pragma code_seg(".pedll32")
@@ -425,7 +439,7 @@ static BOOL reloc_is_text(PIMAGE_NT_HEADERS32 pImageNtHeader, PIMAGE_SECTION_HEA
 static void reloctext(LPVOID pModule, PIMAGE_NT_HEADERS32 pImageNtHeader, PIMAGE_SECTION_HEADER pSectionPointer, LPVOID lpRelocAddress, DWORD dwRelocSize, LPVOID lpTextAddr)
 {
 	DWORD ImageBase = (DWORD) _baseAddress;
-
+			
 	base_relocation_block_t *relocation_page = (base_relocation_block_t *) lpRelocAddress;
 
 	if (dwRelocSize == 0 || relocation_page == NULL)
@@ -456,8 +470,7 @@ static void reloctext(LPVOID pModule, PIMAGE_NT_HEADERS32 pImageNtHeader, PIMAGE
 					switch(type)
 					{
 						case IMAGE_REL_BASED_HIGHLOW:
-							value = value - ImageBase;
-							value = value + (DWORD) pModule;
+							value += (ImageBase - (DWORD) pModule);
 							*ptr = value;
 							break;
 						case IMAGE_REL_BASED_DIR64:
@@ -679,7 +692,7 @@ __declspec(allocate(".pedll32"))
 #pragma code_seg(".pedll32")
 static void _InitializeCriticalSection(HMODULE h, LPCRITICAL_SECTION lpCriticalSection)
 {
-	char szApi[32];
+	char szApi[40];
 	__strcpy(szApi, szInitialize);
 	__strcat(szApi, szCritical);
 	__strcat(szApi, szSection);
@@ -734,7 +747,7 @@ __declspec(allocate(".pedll32"))
 char szKernel32[] = { 'K', 'E', 'R', 'N', 'E', 'L', '3', '2', 0x00 };
 
 #pragma code_seg(".pedll32")
-static HMODULE get_Kernel32(void)
+static HMODULE WINAPI get_Kernel32(void)
 {
 	return _dll32_LoadLibraryA(szKernel32);
 }
@@ -743,7 +756,7 @@ __declspec(allocate(".pedll32"))
 char szDisableThreadLibraryCalls[] = { 'D', 'i', 's', 'a', 'b', 'l', 'e', 'T', 'h', 'r', 'e', 'a', 'd', 'L', 'i', 'b', 'r', 'a', 'r', 'y', 'C', 'a', 'l', 'l', 's', 00 };
 
 #pragma code_seg(".pedll32")
-static BOOL _DisableThreadLibraryCalls(HMODULE hKernel32, HMODULE hModule)
+static BOOL WINAPI _DisableThreadLibraryCalls(HMODULE hKernel32, HMODULE hModule)
 {
 	typedef BOOL (WINAPI *DisableThreadLibraryCalls_ptr)(HMODULE hModule);
 	DisableThreadLibraryCalls_ptr f = (DisableThreadLibraryCalls_ptr) _dll32_GetProcAddress(hKernel32, szDisableThreadLibraryCalls);
@@ -825,11 +838,11 @@ LPVOID WINAPI DELAYDECRYPT(DWORD dwX)
 
 	if (g_decrypted == FALSE)
 	{
-		
 		char szVirtualAlloc[0x14];
 		__strcpy(szVirtualAlloc, szVirtualProtect);
+		HMODULE h = get_Kernel32();
 
-		_VirtualProtect = (VirtualProtect_ptr) _dll32_GetProcAddress(get_Kernel32(), szVirtualProtect);
+		_VirtualProtect = (VirtualProtect_ptr) _dll32_GetProcAddress(h, szVirtualProtect);
 		szVirtualAlloc[7] = 'A';
 		szVirtualAlloc[8] = 'l';
 		szVirtualAlloc[9] = 'l';
@@ -837,7 +850,7 @@ LPVOID WINAPI DELAYDECRYPT(DWORD dwX)
 		szVirtualAlloc[0x0b] = 'c';
 		szVirtualAlloc[0x0c] = 0x00;
 
-		_VirtualAlloc = (VirtualAlloc_ptr) _dll32_GetProcAddress(get_Kernel32(), szVirtualProtect);
+		_VirtualAlloc = (VirtualAlloc_ptr) _dll32_GetProcAddress(h, szVirtualAlloc);
 
 		vtable.mem_protect	= _VirtualProtect;
 		vtable.mem_alloc	= _VirtualAlloc;
@@ -862,6 +875,7 @@ LPVOID WINAPI DELAYDECRYPT(DWORD dwX)
 		mov eax, dwResult
 		mov	esp, ebp
 		pop	ebp
+		pop ecx
 		pop ecx
 		jmp eax
 	}
